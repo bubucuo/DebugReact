@@ -7,7 +7,7 @@
  * @flow
  */
 
-import type {ReactElement, Source} from 'shared/ReactElementType';
+import type { ReactElement, Source } from "shared/ReactElementType";
 import type {
   ReactFragment,
   ReactPortal,
@@ -15,28 +15,28 @@ import type {
   ReactEventResponder,
   ReactEventResponderInstance,
   ReactFundamentalComponent,
-  ReactScope,
-} from 'shared/ReactTypes';
-import type {RootTag} from 'shared/ReactRootTags';
-import type {WorkTag} from 'shared/ReactWorkTags';
-import type {TypeOfMode} from './ReactTypeOfMode';
-import type {SideEffectTag} from 'shared/ReactSideEffectTags';
-import type {ExpirationTime} from './ReactFiberExpirationTime';
-import type {UpdateQueue} from './ReactUpdateQueue';
-import type {ContextDependency} from './ReactFiberNewContext';
-import type {HookType} from './ReactFiberHooks';
-import type {SuspenseInstance} from './ReactFiberHostConfig';
+  ReactScope
+} from "shared/ReactTypes";
+import type { RootTag } from "shared/ReactRootTags";
+import type { WorkTag } from "shared/ReactWorkTags";
+import type { TypeOfMode } from "./ReactTypeOfMode";
+import type { SideEffectTag } from "shared/ReactSideEffectTags";
+import type { ExpirationTime } from "./ReactFiberExpirationTime";
+import type { UpdateQueue } from "./ReactUpdateQueue";
+import type { ContextDependency } from "./ReactFiberNewContext";
+import type { HookType } from "./ReactFiberHooks";
+import type { SuspenseInstance } from "./ReactFiberHostConfig";
 
-import invariant from 'shared/invariant';
-import warningWithoutStack from 'shared/warningWithoutStack';
+import invariant from "shared/invariant";
+import warningWithoutStack from "shared/warningWithoutStack";
 import {
   enableProfilerTimer,
   enableFundamentalAPI,
   enableUserTimingAPI,
-  enableScopeAPI,
-} from 'shared/ReactFeatureFlags';
-import {NoEffect, Placement} from 'shared/ReactSideEffectTags';
-import {ConcurrentRoot, BlockingRoot} from 'shared/ReactRootTags';
+  enableScopeAPI
+} from "shared/ReactFeatureFlags";
+import { NoEffect, Placement } from "shared/ReactSideEffectTags";
+import { ConcurrentRoot, BlockingRoot } from "shared/ReactRootTags";
 import {
   IndeterminateComponent,
   ClassComponent,
@@ -58,24 +58,24 @@ import {
   SimpleMemoComponent,
   LazyComponent,
   FundamentalComponent,
-  ScopeComponent,
-} from 'shared/ReactWorkTags';
-import getComponentName from 'shared/getComponentName';
+  ScopeComponent
+} from "shared/ReactWorkTags";
+import getComponentName from "shared/getComponentName";
 
-import {isDevToolsPresent} from './ReactFiberDevToolsHook';
+import { isDevToolsPresent } from "./ReactFiberDevToolsHook";
 import {
   resolveClassForHotReloading,
   resolveFunctionForHotReloading,
-  resolveForwardRefForHotReloading,
-} from './ReactFiberHotReloading';
-import {NoWork} from './ReactFiberExpirationTime';
+  resolveForwardRefForHotReloading
+} from "./ReactFiberHotReloading";
+import { NoWork } from "./ReactFiberExpirationTime";
 import {
   NoMode,
   ConcurrentMode,
   ProfileMode,
   StrictMode,
-  BlockingMode,
-} from './ReactTypeOfMode';
+  BlockingMode
+} from "./ReactTypeOfMode";
 import {
   REACT_FORWARD_REF_TYPE,
   REACT_FRAGMENT_TYPE,
@@ -89,8 +89,8 @@ import {
   REACT_MEMO_TYPE,
   REACT_LAZY_TYPE,
   REACT_FUNDAMENTAL_TYPE,
-  REACT_SCOPE_TYPE,
-} from 'shared/ReactSymbols';
+  REACT_SCOPE_TYPE
+} from "shared/ReactSymbols";
 
 let hasBadMapPolyfill;
 
@@ -116,8 +116,8 @@ export type Dependencies = {
   firstContext: ContextDependency<mixed> | null,
   responders: Map<
     ReactEventResponder<any, any>,
-    ReactEventResponderInstance<any, any>,
-  > | null,
+    ReactEventResponderInstance<any, any>
+  > | null
 };
 
 // A Fiber is work on a Component that needs to be done or was done. There can
@@ -134,19 +134,24 @@ export type Fiber = {|
   // minimize the number of objects created during the initial render.
 
   // Tag identifying the type of fiber.
+  //标记fiber的类型，类似我们之前写react核心api时候的vtype
   tag: WorkTag,
 
   // Unique identifier of this child.
+  //当前子节点的唯一标识
   key: null | string,
 
   // The value of element.type which is used to preserve the identity during
   // reconciliation of this child.
+  //element.type的值，保存的是协调期间当前child的身份
   elementType: any,
 
   // The resolved function/class/ associated with this fiber.
+  //当前fiber关联的function或者class
   type: any,
 
   // The local state associated with this fiber.
+  //当前fiber的local state
   stateNode: any,
 
   // Conceptual aliases
@@ -159,28 +164,33 @@ export type Fiber = {|
   // This is effectively the parent, but there can be multiple parents (two)
   // so this is only the parent of the thing we're currently processing.
   // It is conceptually the same as the return address of a stack frame.
+  //是指程序(program)在处理完当前fiber之后应当返回的fiber，概念上来说，这是与一个栈帧返回一个地址是相同的，它也可被认为是一个parent fiber。
   return: Fiber | null,
 
   // Singly Linked List Tree Structure.
+  //单向链表结构
   child: Fiber | null,
   sibling: Fiber | null,
   index: number,
 
   // The ref last used to attach this node.
   // I'll avoid adding an owner field for prod and model that as functions.
-  ref: null | (((handle: mixed) => void) & {_stringRef: ?string}) | RefObject,
+  ref: null | (((handle: mixed) => void) & { _stringRef: ?string }) | RefObject,
 
   // Input is the data coming into process this fiber. Arguments. Props.
-  pendingProps: any, // This type will be more specific once we overload the tag.
-  memoizedProps: any, // The props used to create the output.
+  pendingProps: any, // This type will be more specific once we overload the tag. 在我们加载完tag之后，这个type值会更加详细
+  memoizedProps: any, // The props used to create the output. 用于创建output的props值
 
   // A queue of state updates and callbacks.
+  //用于state更新和回调的队列
   updateQueue: UpdateQueue<any> | null,
 
   // The state used to create the output
+  //用于创建output的state
   memoizedState: any,
 
   // Dependencies (contexts, events) for this fiber, if it has any
+  //当前fiber的依赖(上下文contexts、events事件等)，如果有的话
   dependencies: Dependencies | null,
 
   // Bitfield that describes properties about the fiber and its subtree. E.g.
@@ -247,7 +257,7 @@ export type Fiber = {|
   _debugNeedsRemount?: boolean,
 
   // Used to verify that the order of hooks does not change between renders.
-  _debugHookTypes?: Array<HookType> | null,
+  _debugHookTypes?: Array<HookType> | null
 |};
 
 let debugCounter = 1;
@@ -256,7 +266,7 @@ function FiberNode(
   tag: WorkTag,
   pendingProps: mixed,
   key: null | string,
-  mode: TypeOfMode,
+  mode: TypeOfMode
 ) {
   // Instance
   this.tag = tag;
@@ -332,7 +342,7 @@ function FiberNode(
     this._debugOwner = null;
     this._debugNeedsRemount = false;
     this._debugHookTypes = null;
-    if (!hasBadMapPolyfill && typeof Object.preventExtensions === 'function') {
+    if (!hasBadMapPolyfill && typeof Object.preventExtensions === "function") {
       Object.preventExtensions(this);
     }
   }
@@ -355,7 +365,7 @@ const createFiber = function(
   tag: WorkTag,
   pendingProps: mixed,
   key: null | string,
-  mode: TypeOfMode,
+  mode: TypeOfMode
 ): Fiber {
   // $FlowFixMe: the shapes are exact here but Flow doesn't like constructors
   return new FiberNode(tag, pendingProps, key, mode);
@@ -368,14 +378,14 @@ function shouldConstruct(Component: Function) {
 
 export function isSimpleFunctionComponent(type: any) {
   return (
-    typeof type === 'function' &&
+    typeof type === "function" &&
     !shouldConstruct(type) &&
     type.defaultProps === undefined
   );
 }
 
 export function resolveLazyComponentTag(Component: Function): WorkTag {
-  if (typeof Component === 'function') {
+  if (typeof Component === "function") {
     return shouldConstruct(Component) ? ClassComponent : FunctionComponent;
   } else if (Component !== undefined && Component !== null) {
     const $$typeof = Component.$$typeof;
@@ -393,7 +403,7 @@ export function resolveLazyComponentTag(Component: Function): WorkTag {
 export function createWorkInProgress(
   current: Fiber,
   pendingProps: any,
-  expirationTime: ExpirationTime,
+  expirationTime: ExpirationTime
 ): Fiber {
   let workInProgress = current.alternate;
   if (workInProgress === null) {
@@ -406,7 +416,7 @@ export function createWorkInProgress(
       current.tag,
       pendingProps,
       current.key,
-      current.mode,
+      current.mode
     );
     workInProgress.elementType = current.elementType;
     workInProgress.type = current.type;
@@ -461,7 +471,7 @@ export function createWorkInProgress(
       : {
           expirationTime: currentDependencies.expirationTime,
           firstContext: currentDependencies.firstContext,
-          responders: currentDependencies.responders,
+          responders: currentDependencies.responders
         };
 
   // These will be overridden during the parent's reconciliation
@@ -499,7 +509,7 @@ export function createWorkInProgress(
 // Used to reuse a Fiber for a second pass.
 export function resetWorkInProgress(
   workInProgress: Fiber,
-  renderExpirationTime: ExpirationTime,
+  renderExpirationTime: ExpirationTime
 ) {
   // This resets the Fiber to what createFiber or createWorkInProgress would
   // have set the values to before during the first pass. Ideally this wouldn't
@@ -556,7 +566,7 @@ export function resetWorkInProgress(
         : {
             expirationTime: currentDependencies.expirationTime,
             firstContext: currentDependencies.firstContext,
-            responders: currentDependencies.responders,
+            responders: currentDependencies.responders
           };
 
     if (enableProfilerTimer) {
@@ -596,14 +606,14 @@ export function createFiberFromTypeAndProps(
   pendingProps: any,
   owner: null | Fiber,
   mode: TypeOfMode,
-  expirationTime: ExpirationTime,
+  expirationTime: ExpirationTime
 ): Fiber {
   let fiber;
 
   let fiberTag = IndeterminateComponent;
   // The resolved type is set if we know what the final type will be. I.e. it's not lazy.
   let resolvedType = type;
-  if (typeof type === 'function') {
+  if (typeof type === "function") {
     if (shouldConstruct(type)) {
       fiberTag = ClassComponent;
       if (__DEV__) {
@@ -614,7 +624,7 @@ export function createFiberFromTypeAndProps(
         resolvedType = resolveFunctionForHotReloading(resolvedType);
       }
     }
-  } else if (typeof type === 'string') {
+  } else if (typeof type === "string") {
     fiberTag = HostComponent;
   } else {
     getTag: switch (type) {
@@ -623,7 +633,7 @@ export function createFiberFromTypeAndProps(
           pendingProps.children,
           mode,
           expirationTime,
-          key,
+          key
         );
       case REACT_CONCURRENT_MODE_TYPE:
         fiberTag = Mode;
@@ -642,10 +652,10 @@ export function createFiberFromTypeAndProps(
           pendingProps,
           mode,
           expirationTime,
-          key,
+          key
         );
       default: {
-        if (typeof type === 'object' && type !== null) {
+        if (typeof type === "object" && type !== null) {
           switch (type.$$typeof) {
             case REACT_PROVIDER_TYPE:
               fiberTag = ContextProvider;
@@ -674,7 +684,7 @@ export function createFiberFromTypeAndProps(
                   pendingProps,
                   mode,
                   expirationTime,
-                  key,
+                  key
                 );
               }
               break;
@@ -685,36 +695,36 @@ export function createFiberFromTypeAndProps(
                   pendingProps,
                   mode,
                   expirationTime,
-                  key,
+                  key
                 );
               }
           }
         }
-        let info = '';
+        let info = "";
         if (__DEV__) {
           if (
             type === undefined ||
-            (typeof type === 'object' &&
+            (typeof type === "object" &&
               type !== null &&
               Object.keys(type).length === 0)
           ) {
             info +=
-              ' You likely forgot to export your component from the file ' +
+              " You likely forgot to export your component from the file " +
               "it's defined in, or you might have mixed up default and " +
-              'named imports.';
+              "named imports.";
           }
           const ownerName = owner ? getComponentName(owner.type) : null;
           if (ownerName) {
-            info += '\n\nCheck the render method of `' + ownerName + '`.';
+            info += "\n\nCheck the render method of `" + ownerName + "`.";
           }
         }
         invariant(
           false,
-          'Element type is invalid: expected a string (for built-in ' +
-            'components) or a class/function (for composite components) ' +
-            'but got: %s.%s',
+          "Element type is invalid: expected a string (for built-in " +
+            "components) or a class/function (for composite components) " +
+            "but got: %s.%s",
           type == null ? type : typeof type,
-          info,
+          info
         );
       }
     }
@@ -731,7 +741,7 @@ export function createFiberFromTypeAndProps(
 export function createFiberFromElement(
   element: ReactElement,
   mode: TypeOfMode,
-  expirationTime: ExpirationTime,
+  expirationTime: ExpirationTime
 ): Fiber {
   let owner = null;
   if (__DEV__) {
@@ -746,7 +756,7 @@ export function createFiberFromElement(
     pendingProps,
     owner,
     mode,
-    expirationTime,
+    expirationTime
   );
   if (__DEV__) {
     fiber._debugSource = element._source;
@@ -759,7 +769,7 @@ export function createFiberFromFragment(
   elements: ReactFragment,
   mode: TypeOfMode,
   expirationTime: ExpirationTime,
-  key: null | string,
+  key: null | string
 ): Fiber {
   const fiber = createFiber(Fragment, elements, key, mode);
   fiber.expirationTime = expirationTime;
@@ -771,7 +781,7 @@ export function createFiberFromFundamental(
   pendingProps: any,
   mode: TypeOfMode,
   expirationTime: ExpirationTime,
-  key: null | string,
+  key: null | string
 ): Fiber {
   const fiber = createFiber(FundamentalComponent, pendingProps, key, mode);
   fiber.elementType = fundamentalComponent;
@@ -785,7 +795,7 @@ function createFiberFromScope(
   pendingProps: any,
   mode: TypeOfMode,
   expirationTime: ExpirationTime,
-  key: null | string,
+  key: null | string
 ) {
   const fiber = createFiber(ScopeComponent, pendingProps, key, mode);
   fiber.type = scope;
@@ -798,16 +808,16 @@ function createFiberFromProfiler(
   pendingProps: any,
   mode: TypeOfMode,
   expirationTime: ExpirationTime,
-  key: null | string,
+  key: null | string
 ): Fiber {
   if (__DEV__) {
     if (
-      typeof pendingProps.id !== 'string' ||
-      typeof pendingProps.onRender !== 'function'
+      typeof pendingProps.id !== "string" ||
+      typeof pendingProps.onRender !== "function"
     ) {
       warningWithoutStack(
         false,
-        'Profiler must specify an "id" string and "onRender" function as props',
+        'Profiler must specify an "id" string and "onRender" function as props'
       );
     }
   }
@@ -825,7 +835,7 @@ export function createFiberFromSuspense(
   pendingProps: any,
   mode: TypeOfMode,
   expirationTime: ExpirationTime,
-  key: null | string,
+  key: null | string
 ) {
   const fiber = createFiber(SuspenseComponent, pendingProps, key, mode);
 
@@ -843,7 +853,7 @@ export function createFiberFromSuspenseList(
   pendingProps: any,
   mode: TypeOfMode,
   expirationTime: ExpirationTime,
-  key: null | string,
+  key: null | string
 ) {
   const fiber = createFiber(SuspenseListComponent, pendingProps, key, mode);
   if (__DEV__) {
@@ -860,7 +870,7 @@ export function createFiberFromSuspenseList(
 export function createFiberFromText(
   content: string,
   mode: TypeOfMode,
-  expirationTime: ExpirationTime,
+  expirationTime: ExpirationTime
 ): Fiber {
   const fiber = createFiber(HostText, content, null, mode);
   fiber.expirationTime = expirationTime;
@@ -870,13 +880,13 @@ export function createFiberFromText(
 export function createFiberFromHostInstanceForDeletion(): Fiber {
   const fiber = createFiber(HostComponent, null, null, NoMode);
   // TODO: These should not need a type.
-  fiber.elementType = 'DELETED';
-  fiber.type = 'DELETED';
+  fiber.elementType = "DELETED";
+  fiber.type = "DELETED";
   return fiber;
 }
 
 export function createFiberFromDehydratedFragment(
-  dehydratedNode: SuspenseInstance,
+  dehydratedNode: SuspenseInstance
 ): Fiber {
   const fiber = createFiber(DehydratedFragment, null, null, NoMode);
   fiber.stateNode = dehydratedNode;
@@ -886,7 +896,7 @@ export function createFiberFromDehydratedFragment(
 export function createFiberFromPortal(
   portal: ReactPortal,
   mode: TypeOfMode,
-  expirationTime: ExpirationTime,
+  expirationTime: ExpirationTime
 ): Fiber {
   const pendingProps = portal.children !== null ? portal.children : [];
   const fiber = createFiber(HostPortal, pendingProps, portal.key, mode);
@@ -894,7 +904,7 @@ export function createFiberFromPortal(
   fiber.stateNode = {
     containerInfo: portal.containerInfo,
     pendingChildren: null, // Used by persistent updates
-    implementation: portal.implementation,
+    implementation: portal.implementation
   };
   return fiber;
 }
@@ -902,7 +912,7 @@ export function createFiberFromPortal(
 // Used for stashing WIP properties to replay failed work in DEV.
 export function assignFiberPropertiesInDEV(
   target: Fiber | null,
-  source: Fiber,
+  source: Fiber
 ): Fiber {
   if (target === null) {
     // This Fiber's initial properties will always be overwritten.
