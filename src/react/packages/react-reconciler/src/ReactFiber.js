@@ -21,9 +21,7 @@ import type {RootTag} from 'shared/ReactRootTags';
 import type {WorkTag} from 'shared/ReactWorkTags';
 import type {TypeOfMode} from './ReactTypeOfMode';
 import type {SideEffectTag} from 'shared/ReactSideEffectTags';
-import type {ExpirationTime} from './ReactFiberExpirationTime';
 import type {UpdateQueue} from './ReactUpdateQueue';
-import type {ContextDependency} from './ReactFiberNewContext';
 import type {HookType} from './ReactFiberHooks';
 import type {SuspenseInstance} from './ReactFiberHostConfig';
 
