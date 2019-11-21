@@ -10,6 +10,8 @@
  * This can be used to log issues in development environments in critical
  * paths. Removing the logging code for production environments will keep the
  * same logic and follow the same code paths.
+ * 与invariant相似，但当条件不符合的时候，这里只打印一个警告信息。
+ * 这可用于开发环境下记录日志。
  */
 
 let warningWithoutStack = () => {};
@@ -18,22 +20,22 @@ if (__DEV__) {
   warningWithoutStack = function(condition, format, ...args) {
     if (format === undefined) {
       throw new Error(
-        '`warningWithoutStack(condition, format, ...args)` requires a warning ' +
-          'message argument',
+        "`warningWithoutStack(condition, format, ...args)` requires a warning " +
+          "message argument"
       );
     }
     if (args.length > 8) {
       // Check before the condition to catch violations early.
       throw new Error(
-        'warningWithoutStack() currently supports at most 8 arguments.',
+        "warningWithoutStack() currently supports at most 8 arguments."
       );
     }
     if (condition) {
       return;
     }
-    if (typeof console !== 'undefined') {
-      const argsWithFormat = args.map(item => '' + item);
-      argsWithFormat.unshift('Warning: ' + format);
+    if (typeof console !== "undefined") {
+      const argsWithFormat = args.map(item => "" + item);
+      argsWithFormat.unshift("Warning: " + format);
 
       // We intentionally don't use spread (or .apply) directly because it
       // breaks IE9: https://github.com/facebook/react/issues/13610
@@ -45,7 +47,7 @@ if (__DEV__) {
       // to find the callsite that caused this warning to fire.
       let argIndex = 0;
       const message =
-        'Warning: ' + format.replace(/%s/g, () => args[argIndex++]);
+        "Warning: " + format.replace(/%s/g, () => args[argIndex++]);
       throw new Error(message);
     } catch (x) {}
   };
