@@ -134,7 +134,7 @@ export type Fiber = {|
   // minimize the number of objects created during the initial render.
 
   // Tag identifying the type of fiber.
-  //标记fiber的类型，类似我们之前写react核心api时候的vtype
+  //标记fiber的类型
   tag: WorkTag,
 
   // Unique identifier of this child.
@@ -143,7 +143,7 @@ export type Fiber = {|
 
   // The value of element.type which is used to preserve the identity during
   // reconciliation of this child.
-  //element.type的值，保存的是协调期间当前child的身份
+  //element.type的值
   elementType: any,
 
   // The resolved function/class/ associated with this fiber.
@@ -229,6 +229,7 @@ export type Fiber = {|
   // This tells us how well the tree makes use of sCU for memoization.
   // It is reset to 0 each time we render and only updated when we don't bailout.
   // This field is only set when the enableProfilerTimer flag is enabled.
+  //这个fiber以及它的子元素此次更新所花费的时间
   actualDuration?: number,
 
   // If the Fiber is currently active in the "render" phase,

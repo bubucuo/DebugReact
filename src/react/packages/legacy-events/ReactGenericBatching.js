@@ -7,11 +7,11 @@
 
 import {
   needsStateRestore,
-  restoreStateIfNeeded,
-} from './ReactControlledComponent';
+  restoreStateIfNeeded
+} from "./ReactControlledComponent";
 
-import {enableFlareAPI} from 'shared/ReactFeatureFlags';
-import {invokeGuardedCallbackAndCatchFirstError} from 'shared/ReactErrorUtils';
+import { enableFlareAPI } from "shared/ReactFeatureFlags";
+import { invokeGuardedCallbackAndCatchFirstError } from "shared/ReactErrorUtils";
 
 // Used as a way to call batchedUpdates when we don't have a reference to
 // the renderer. Such as when we're dispatching events or if third party
@@ -82,7 +82,7 @@ export function executeUserEventHandler(fn: any => void, value: any): void {
   const previouslyInEventHandler = isInsideEventHandler;
   try {
     isInsideEventHandler = true;
-    const type = typeof value === 'object' && value !== null ? value.type : '';
+    const type = typeof value === "object" && value !== null ? value.type : "";
     invokeGuardedCallbackAndCatchFirstError(type, fn, undefined, value);
   } finally {
     isInsideEventHandler = previouslyInEventHandler;
@@ -119,7 +119,7 @@ export function flushDiscreteUpdatesIfNeeded(timeStamp: number) {
   if (
     !isInsideEventHandler &&
     (!enableFlareAPI ||
-      (timeStamp === 0 || lastFlushedEventTimeStamp !== timeStamp))
+      timeStamp === 0 || lastFlushedEventTimeStamp !== timeStamp)
   ) {
     lastFlushedEventTimeStamp = timeStamp;
     flushDiscreteUpdatesImpl();
@@ -130,7 +130,7 @@ export function setBatchingImplementation(
   _batchedUpdatesImpl,
   _discreteUpdatesImpl,
   _flushDiscreteUpdatesImpl,
-  _batchedEventUpdatesImpl,
+  _batchedEventUpdatesImpl
 ) {
   batchedUpdatesImpl = _batchedUpdatesImpl;
   discreteUpdatesImpl = _discreteUpdatesImpl;

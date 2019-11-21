@@ -7,33 +7,33 @@
  * @flow
  */
 
-import type {LazyComponent} from 'shared/ReactLazyComponent';
+import type { LazyComponent } from "shared/ReactLazyComponent";
 
-import warningWithoutStack from 'shared/warningWithoutStack';
+import warningWithoutStack from "shared/warningWithoutStack";
 import {
   REACT_CONTEXT_TYPE,
   REACT_FORWARD_REF_TYPE,
   REACT_FRAGMENT_TYPE,
   REACT_PORTAL_TYPE,
-  REACT_MEMO_TYPE,
+  REACT_MEMO_TY46PE,
   REACT_PROFILER_TYPE,
   REACT_PROVIDER_TYPE,
   REACT_STRICT_MODE_TYPE,
   REACT_SUSPENSE_TYPE,
   REACT_SUSPENSE_LIST_TYPE,
-  REACT_LAZY_TYPE,
-} from 'shared/ReactSymbols';
-import {refineResolvedLazyComponent} from 'shared/ReactLazyComponent';
+  REACT_LAZY_TYPE
+} from "shared/ReactSymbols";
+import { refineResolvedLazyComponent } from "shared/ReactLazyComponent";
 
 function getWrappedName(
   outerType: mixed,
   innerType: any,
-  wrapperName: string,
+  wrapperName: string
 ): string {
-  const functionName = innerType.displayName || innerType.name || '';
+  const functionName = innerType.displayName || innerType.name || "";
   return (
     (outerType: any).displayName ||
-    (functionName !== '' ? `${wrapperName}(${functionName})` : wrapperName)
+    (functionName !== "" ? `${wrapperName}(${functionName})` : wrapperName)
   );
 }
 
@@ -43,42 +43,42 @@ function getComponentName(type: mixed): string | null {
     return null;
   }
   if (__DEV__) {
-    if (typeof (type: any).tag === 'number') {
+    if (typeof (type: any).tag === "number") {
       warningWithoutStack(
         false,
-        'Received an unexpected object in getComponentName(). ' +
-          'This is likely a bug in React. Please file an issue.',
+        "Received an unexpected object in getComponentName(). " +
+          "This is likely a bug in React. Please file an issue."
       );
     }
   }
-  if (typeof type === 'function') {
+  if (typeof type === "function") {
     return type.displayName || type.name || null;
   }
-  if (typeof type === 'string') {
+  if (typeof type === "string") {
     return type;
   }
   switch (type) {
     case REACT_FRAGMENT_TYPE:
-      return 'Fragment';
+      return "Fragment";
     case REACT_PORTAL_TYPE:
-      return 'Portal';
+      return "Portal";
     case REACT_PROFILER_TYPE:
       return `Profiler`;
     case REACT_STRICT_MODE_TYPE:
-      return 'StrictMode';
+      return "StrictMode";
     case REACT_SUSPENSE_TYPE:
-      return 'Suspense';
+      return "Suspense";
     case REACT_SUSPENSE_LIST_TYPE:
-      return 'SuspenseList';
+      return "SuspenseList";
   }
-  if (typeof type === 'object') {
+  if (typeof type === "object") {
     switch (type.$$typeof) {
       case REACT_CONTEXT_TYPE:
-        return 'Context.Consumer';
+        return "Context.Consumer";
       case REACT_PROVIDER_TYPE:
-        return 'Context.Provider';
+        return "Context.Provider";
       case REACT_FORWARD_REF_TYPE:
-        return getWrappedName(type, type.render, 'ForwardRef');
+        return getWrappedName(type, type.render, "ForwardRef");
       case REACT_MEMO_TYPE:
         return getComponentName(type.type);
       case REACT_LAZY_TYPE: {

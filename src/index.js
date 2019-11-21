@@ -9,16 +9,19 @@ class ClassCmp extends Component {
       counter: 0
     };
   }
-  componentDidMount() {
-    document.getElementById("test").addEventListener("click", () => {
-      this.setCounter();
-    });
-  }
+  // componentDidMount() {
+  //   document.getElementById("test").addEventListener("click", () => {
+  //     this.setCounter();
+  //   });
+  // }
   setCounter = () => {
     this.setState({
       counter: this.state.counter + 1
     });
-    console.log("counter", this.state.counter);
+    // this.setState({
+    //   counter: this.state.counter + 2
+    // });
+    // console.log("counter", this.state.counter);
   };
   render() {
     const { name } = this.props;
@@ -27,17 +30,17 @@ class ClassCmp extends Component {
       <div className="border">
         <p>{name}</p>
         <button onClick={this.setCounter}>{counter}</button>
-        <p></p>
-        <button id="test">sourceClick-{counter}</button>
+        {/* <button id="test">sourceClick-{counter}</button> */}
       </div>
     );
   }
 }
 
-const jsx = (
-  <>
+let jsx = (
+  <div className="box">
     <ClassCmp name="class组件" />
-  </>
+    <div className="border">div元素</div>
+  </div>
 );
 
 console.log("当前React版本是:" + React.version);
