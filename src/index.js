@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, PureComponent } from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 
@@ -9,11 +9,6 @@ class ClassCmp extends Component {
       counter: 0
     };
   }
-  // componentDidMount() {
-  //   document.getElementById("test").addEventListener("click", () => {
-  //     this.setCounter();
-  //   });
-  // }
   setCounter = () => {
     this.setState({
       counter: this.state.counter + 1
@@ -30,7 +25,6 @@ class ClassCmp extends Component {
       <div className="border">
         <p>{name}</p>
         <button onClick={this.setCounter}>{counter}</button>
-        {/* <button id="test">sourceClick-{counter}</button> */}
       </div>
     );
   }
@@ -43,6 +37,7 @@ let jsx = (
   </div>
 );
 
+// console.log("omg", Component.prototype, PureComponent.prototype);
 console.log("当前React版本是:" + React.version);
 
 ReactDOM.render(jsx, document.getElementById("root"));

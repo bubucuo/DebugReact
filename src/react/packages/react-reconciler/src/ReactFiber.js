@@ -369,7 +369,11 @@ const createFiber = function(
   mode: TypeOfMode
 ): Fiber {
   // $FlowFixMe: the shapes are exact here but Flow doesn't like constructors
-  return new FiberNode(tag, pendingProps, key, mode);
+
+  // return new FiberNode(tag, pendingProps, key, mode);
+  const tem = new FiberNode(tag, pendingProps, key, mode); //ssy
+  // console.log("createFiber", tem); //ssy
+  return tem; //ssy
 };
 
 function shouldConstruct(Component: Function) {
@@ -401,6 +405,7 @@ export function resolveLazyComponentTag(Component: Function): WorkTag {
 }
 
 // This is used to create an alternate fiber to do work on.
+//这里是要创建出一个用于执行任务的alternate
 export function createWorkInProgress(
   current: Fiber,
   pendingProps: any,

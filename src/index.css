@@ -12,3 +12,17 @@ body {
   padding: 10px;
   border: solid 1px red;
 }
+
+.dialog {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: auto;
+  border: solid 1px black;
+  width: 400px;
+  height: 300px;
+  text-align: center;
+  line-height: 100px;
+}
