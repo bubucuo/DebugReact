@@ -7,13 +7,13 @@
  * @flow
  */
 
-import type {Fiber} from './ReactFiber';
-import type {FiberRoot} from './ReactFiberRoot';
-import type {ExpirationTime} from './ReactFiberExpirationTime';
-import type {ReactPriorityLevel} from './SchedulerWithReactIntegration';
-import type {Interaction} from 'scheduler/src/Tracing';
-import type {SuspenseConfig} from './ReactFiberSuspenseConfig';
-import type {SuspenseState} from './ReactFiberSuspenseComponent';
+import type { Fiber } from "./ReactFiber";
+import type { FiberRoot } from "./ReactFiberRoot";
+import type { ExpirationTime } from "./ReactFiberExpirationTime";
+import type { ReactPriorityLevel } from "./SchedulerWithReactIntegration";
+import type { Interaction } from "scheduler/src/Tracing";
+import type { SuspenseConfig } from "./ReactFiberSuspenseConfig";
+import type { SuspenseState } from "./ReactFiberSuspenseComponent";
 
 import {
   warnAboutDeprecatedLifecycles,
@@ -24,11 +24,11 @@ import {
   enableSchedulerTracing,
   warnAboutUnmockedScheduler,
   flushSuspenseFallbacksInTests,
-  disableSchedulerTimeoutBasedOnReactExpirationTime,
-} from 'shared/ReactFeatureFlags';
-import ReactSharedInternals from 'shared/ReactSharedInternals';
-import invariant from 'shared/invariant';
-import warning from 'shared/warning';
+  disableSchedulerTimeoutBasedOnReactExpirationTime
+} from "shared/ReactFeatureFlags";
+import ReactSharedInternals from "shared/ReactSharedInternals";
+import invariant from "shared/invariant";
+import warning from "shared/warning";
 
 import {
   scheduleCallback,
@@ -45,13 +45,13 @@ import {
   LowPriority,
   IdlePriority,
   flushSyncCallbackQueue,
-  scheduleSyncCallback,
-} from './SchedulerWithReactIntegration';
+  scheduleSyncCallback
+} from "./SchedulerWithReactIntegration";
 
 // The scheduler is imported here *only* to detect whether it's been mocked
-import * as Scheduler from 'scheduler';
+import * as Scheduler from "scheduler";
 
-import {__interactionsRef, __subscriberRef} from 'scheduler/tracing';
+import { __interactionsRef, __subscriberRef } from "scheduler/tracing";
 
 import {
   prepareForCommit,
@@ -59,24 +59,24 @@ import {
   scheduleTimeout,
   cancelTimeout,
   noTimeout,
-  warnsIfNotActing,
-} from './ReactFiberHostConfig';
+  warnsIfNotActing
+} from "./ReactFiberHostConfig";
 
-import {createWorkInProgress, assignFiberPropertiesInDEV} from './ReactFiber';
+import { createWorkInProgress, assignFiberPropertiesInDEV } from "./ReactFiber";
 import {
   isRootSuspendedAtTime,
   markRootSuspendedAtTime,
   markRootFinishedAtTime,
   markRootUpdatedAtTime,
-  markRootExpiredAtTime,
-} from './ReactFiberRoot';
+  markRootExpiredAtTime
+} from "./ReactFiberRoot";
 import {
   NoMode,
   StrictMode,
   ProfileMode,
   BlockingMode,
-  ConcurrentMode,
-} from './ReactTypeOfMode';
+  ConcurrentMode
+} from "./ReactTypeOfMode";
 import {
   HostRoot,
   ClassComponent,
@@ -85,8 +85,8 @@ import {
   FunctionComponent,
   ForwardRef,
   MemoComponent,
-  SimpleMemoComponent,
-} from 'shared/ReactWorkTags';
+  SimpleMemoComponent
+} from "shared/ReactWorkTags";
 import {
   NoEffect,
   PerformedWork,
@@ -102,8 +102,8 @@ import {
   Incomplete,
   HostEffectMask,
   Hydrating,
-  HydratingAndUpdate,
-} from 'shared/ReactSideEffectTags';
+  HydratingAndUpdate
+} from "shared/ReactSideEffectTags";
 import {
   NoWork,
   Sync,
@@ -116,16 +116,16 @@ import {
   inferPriorityFromExpirationTime,
   LOW_PRIORITY_EXPIRATION,
   Batched,
-  Idle,
-} from './ReactFiberExpirationTime';
-import {beginWork as originalBeginWork} from './ReactFiberBeginWork';
-import {completeWork} from './ReactFiberCompleteWork';
-import {unwindWork, unwindInterruptedWork} from './ReactFiberUnwindWork';
+  Idle
+} from "./ReactFiberExpirationTime";
+import { beginWork as originalBeginWork } from "./ReactFiberBeginWork";
+import { completeWork } from "./ReactFiberCompleteWork";
+import { unwindWork, unwindInterruptedWork } from "./ReactFiberUnwindWork";
 import {
   throwException,
   createRootErrorUpdate,
-  createClassErrorUpdate,
-} from './ReactFiberThrow';
+  createClassErrorUpdate
+} from "./ReactFiberThrow";
 import {
   commitBeforeMutationLifeCycles as commitBeforeMutationEffectOnFiber,
   commitLifeCycles as commitLayoutEffectOnFiber,
@@ -135,29 +135,29 @@ import {
   commitDeletion,
   commitDetachRef,
   commitAttachRef,
-  commitResetTextContent,
-} from './ReactFiberCommitWork';
-import {enqueueUpdate} from './ReactUpdateQueue';
-import {resetContextDependencies} from './ReactFiberNewContext';
-import {resetHooks, ContextOnlyDispatcher} from './ReactFiberHooks';
-import {createCapturedValue} from './ReactCapturedValue';
+  commitResetTextContent
+} from "./ReactFiberCommitWork";
+import { enqueueUpdate } from "./ReactUpdateQueue";
+import { resetContextDependencies } from "./ReactFiberNewContext";
+import { resetHooks, ContextOnlyDispatcher } from "./ReactFiberHooks";
+import { createCapturedValue } from "./ReactCapturedValue";
 
 import {
   recordCommitTime,
   startProfilerTimer,
-  stopProfilerTimerIfRunningAndRecordDelta,
-} from './ReactProfilerTimer';
+  stopProfilerTimerIfRunningAndRecordDelta
+} from "./ReactProfilerTimer";
 
 // DEV stuff
-import warningWithoutStack from 'shared/warningWithoutStack';
-import getComponentName from 'shared/getComponentName';
-import ReactStrictModeWarnings from './ReactStrictModeWarnings';
+import warningWithoutStack from "shared/warningWithoutStack";
+import getComponentName from "shared/getComponentName";
+import ReactStrictModeWarnings from "./ReactStrictModeWarnings";
 import {
   phase as ReactCurrentDebugFiberPhaseInDEV,
   resetCurrentFiber as resetCurrentDebugFiberInDEV,
   setCurrentFiber as setCurrentDebugFiberInDEV,
-  getStackByFiberInDevAndProd,
-} from './ReactCurrentFiber';
+  getStackByFiberInDevAndProd
+} from "./ReactCurrentFiber";
 import {
   recordEffect,
   recordScheduleUpdate,
@@ -173,21 +173,21 @@ import {
   startCommitHostEffectsTimer,
   stopCommitHostEffectsTimer,
   startCommitLifeCyclesTimer,
-  stopCommitLifeCyclesTimer,
-} from './ReactDebugFiberPerf';
+  stopCommitLifeCyclesTimer
+} from "./ReactDebugFiberPerf";
 import {
   invokeGuardedCallback,
   hasCaughtError,
-  clearCaughtError,
-} from 'shared/ReactErrorUtils';
-import {onCommitRoot} from './ReactFiberDevToolsHook';
+  clearCaughtError
+} from "shared/ReactErrorUtils";
+import { onCommitRoot } from "./ReactFiberDevToolsHook";
 
 const ceil = Math.ceil;
 
 const {
   ReactCurrentDispatcher,
   ReactCurrentOwner,
-  IsSomeRendererActing,
+  IsSomeRendererActing
 } = ReactSharedInternals;
 
 type ExecutionContext = number;
@@ -212,7 +212,7 @@ export type Thenable = {
   then(resolve: () => mixed, reject?: () => mixed): Thenable | void,
 
   // Special flag to opt out of tracing interactions across a Suspense boundary.
-  __reactDoNotTraceInteractions?: boolean,
+  __reactDoNotTraceInteractions?: boolean
 };
 
 // Describes where we are in the React execution stack
@@ -259,7 +259,7 @@ let pendingPassiveEffectsExpirationTime: ExpirationTime = NoWork;
 
 let rootsWithPendingDiscreteUpdates: Map<
   FiberRoot,
-  ExpirationTime,
+  ExpirationTime
 > | null = null;
 
 // Use these to prevent an infinite loop of nested updates
@@ -310,7 +310,7 @@ export function getCurrentTime() {
 export function computeExpirationForFiber(
   currentTime: ExpirationTime,
   fiber: Fiber,
-  suspenseConfig: null | SuspenseConfig,
+  suspenseConfig: null | SuspenseConfig
 ): ExpirationTime {
   const mode = fiber.mode;
   if ((mode & BlockingMode) === NoMode) {
@@ -333,7 +333,7 @@ export function computeExpirationForFiber(
     // Compute an expiration time based on the Suspense timeout.
     expirationTime = computeSuspenseExpiration(
       currentTime,
-      suspenseConfig.timeoutMs | 0 || LOW_PRIORITY_EXPIRATION,
+      suspenseConfig.timeoutMs | 0 || LOW_PRIORITY_EXPIRATION
     );
   } else {
     // Compute an expiration time based on the Scheduler priority.
@@ -354,7 +354,7 @@ export function computeExpirationForFiber(
         expirationTime = Idle;
         break;
       default:
-        invariant(false, 'Expected a valid priority level');
+        invariant(false, "Expected a valid priority level");
     }
   }
 
@@ -373,7 +373,7 @@ export function computeExpirationForFiber(
 
 export function scheduleUpdateOnFiber(
   fiber: Fiber,
-  expirationTime: ExpirationTime,
+  expirationTime: ExpirationTime
 ) {
   checkForNestedUpdates();
   warnAboutInvalidUpdatesOnClassComponentsInDEV(fiber);
@@ -556,7 +556,7 @@ function ensureRootIsScheduled(root: FiberRoot) {
     root.callbackExpirationTime = Sync;
     root.callbackPriority = ImmediatePriority;
     root.callbackNode = scheduleSyncCallback(
-      performSyncWorkOnRoot.bind(null, root),
+      performSyncWorkOnRoot.bind(null, root)
     );
     return;
   }
@@ -578,7 +578,7 @@ function ensureRootIsScheduled(root: FiberRoot) {
   const currentTime = requestCurrentTimeForUpdate();
   const priorityLevel = inferPriorityFromExpirationTime(
     currentTime,
-    expirationTime,
+    expirationTime
   );
 
   // If there's an existing render task, confirm it has the correct priority and
@@ -611,7 +611,7 @@ function ensureRootIsScheduled(root: FiberRoot) {
   } else if (disableSchedulerTimeoutBasedOnReactExpirationTime) {
     callbackNode = scheduleCallback(
       priorityLevel,
-      performConcurrentWorkOnRoot.bind(null, root),
+      performConcurrentWorkOnRoot.bind(null, root)
     );
   } else {
     callbackNode = scheduleCallback(
@@ -619,7 +619,7 @@ function ensureRootIsScheduled(root: FiberRoot) {
       performConcurrentWorkOnRoot.bind(null, root),
       // Compute a task timeout based on the expiration time. This also affects
       // ordering because tasks are processed in timeout order.
-      {timeout: expirationTimeToMs(expirationTime) - now()},
+      { timeout: expirationTimeToMs(expirationTime) - now() }
     );
   }
 
@@ -650,7 +650,7 @@ function performConcurrentWorkOnRoot(root, didTimeout) {
     const originalCallbackNode = root.callbackNode;
     invariant(
       (executionContext & (RenderContext | CommitContext)) === NoContext,
-      'Should not already be working.',
+      "Should not already be working."
     );
 
     flushPassiveEffects();
@@ -712,7 +712,7 @@ function performConcurrentWorkOnRoot(root, didTimeout) {
           root,
           finishedWork,
           workInProgressRootExitStatus,
-          expirationTime,
+          expirationTime
         );
       }
 
@@ -731,7 +731,7 @@ function finishConcurrentRender(
   root,
   finishedWork,
   exitStatus,
-  expirationTime,
+  expirationTime
 ) {
   // Set this to null to indicate there's no in-progress render.
   workInProgressRoot = null;
@@ -739,7 +739,7 @@ function finishConcurrentRender(
   switch (exitStatus) {
     case RootIncomplete:
     case RootFatalErrored: {
-      invariant(false, 'Root did not complete. This is a bug in React.');
+      invariant(false, "Root did not complete. This is a bug in React.");
     }
     // Flow knows about invariant, so it complains if I add a break
     // statement, but eslint doesn't know about invariant, so it complains
@@ -754,7 +754,7 @@ function finishConcurrentRender(
       // at that time.
       markRootExpiredAtTime(
         root,
-        expirationTime > Idle ? Idle : expirationTime,
+        expirationTime > Idle ? Idle : expirationTime
       );
       // We assume that this second render pass will be synchronous
       // and therefore not hit this path again.
@@ -827,7 +827,7 @@ function finishConcurrentRender(
           // immediately, wait for more data to arrive.
           root.timeoutHandle = scheduleTimeout(
             commitRoot.bind(null, root),
-            msUntilTimeout,
+            msUntilTimeout
           );
           break;
         }
@@ -896,7 +896,7 @@ function finishConcurrentRender(
           // If we don't have a suspense config, we're going to use a
           // heuristic to determine how long we can suspend.
           const eventTimeMs: number = inferTimeFromExpirationTime(
-            workInProgressRootLatestProcessedExpirationTime,
+            workInProgressRootLatestProcessedExpirationTime
           );
           const currentTimeMs = now();
           const timeUntilExpirationMs =
@@ -924,7 +924,7 @@ function finishConcurrentRender(
           // immediately, wait for more data to arrive.
           root.timeoutHandle = scheduleTimeout(
             commitRoot.bind(null, root),
-            msUntilTimeout,
+            msUntilTimeout
           );
           break;
         }
@@ -952,13 +952,13 @@ function finishConcurrentRender(
         const msUntilTimeout = computeMsUntilSuspenseLoadingDelay(
           workInProgressRootLatestProcessedExpirationTime,
           expirationTime,
-          workInProgressRootCanSuspendUsingConfig,
+          workInProgressRootCanSuspendUsingConfig
         );
         if (msUntilTimeout > 10) {
           markRootSuspendedAtTime(root, expirationTime);
           root.timeoutHandle = scheduleTimeout(
             commitRoot.bind(null, root),
-            msUntilTimeout,
+            msUntilTimeout
           );
           break;
         }
@@ -967,7 +967,7 @@ function finishConcurrentRender(
       break;
     }
     default: {
-      invariant(false, 'Unknown root exit status.');
+      invariant(false, "Unknown root exit status.");
     }
   }
 }
@@ -986,7 +986,7 @@ function performSyncWorkOnRoot(root) {
   } else {
     invariant(
       (executionContext & (RenderContext | CommitContext)) === NoContext,
-      'Should not already be working.',
+      "Should not already be working."
     );
 
     flushPassiveEffects();
@@ -1038,8 +1038,8 @@ function performSyncWorkOnRoot(root) {
         // This is a sync render, so we should have finished the whole tree.
         invariant(
           false,
-          'Cannot commit an incomplete root. This error is likely caused by a ' +
-            'bug in React. Please file an issue.',
+          "Cannot commit an incomplete root. This error is likely caused by a " +
+            "bug in React. Please file an issue."
         );
       } else {
         // We now have a consistent tree. Because this is a sync render, we
@@ -1091,8 +1091,8 @@ export function flushDiscreteUpdates() {
     if (__DEV__ && (executionContext & RenderContext) !== NoContext) {
       warning(
         false,
-        'unstable_flushDiscreteUpdates: Cannot flush updates when React is ' +
-          'already rendering.',
+        "unstable_flushDiscreteUpdates: Cannot flush updates when React is " +
+          "already rendering."
       );
     }
     // We're already rendering, so we can't synchronously flush pending work.
@@ -1115,7 +1115,7 @@ export function syncUpdates<A, B, C, R>(
   fn: (A, B, C) => R,
   a: A,
   b: B,
-  c: C,
+  c: C
 ): R {
   return runWithPriority(ImmediatePriority, fn.bind(null, a, b, c));
 }
@@ -1167,7 +1167,7 @@ export function discreteUpdates<A, B, C, R>(
   fn: (A, B, C) => R,
   a: A,
   b: B,
-  c: C,
+  c: C
 ): R {
   const prevExecutionContext = executionContext;
   executionContext |= DiscreteEventContext;
@@ -1202,8 +1202,8 @@ export function flushSync<A, R>(fn: A => R, a: A): R {
   if ((executionContext & (RenderContext | CommitContext)) !== NoContext) {
     invariant(
       false,
-      'flushSync was called from inside a lifecycle method. It cannot be ' +
-        'called when React is already rendering.',
+      "flushSync was called from inside a lifecycle method. It cannot be " +
+        "called when React is already rendering."
     );
   }
   const prevExecutionContext = executionContext;
@@ -1304,7 +1304,7 @@ function handleError(root, thrownValue) {
         workInProgress.return,
         workInProgress,
         thrownValue,
-        renderExpirationTime,
+        renderExpirationTime
       );
       workInProgress = completeUnitOfWork(workInProgress);
     } catch (yetAnotherThrownValue) {
@@ -1355,7 +1355,7 @@ export function markCommitTimeOfFallback() {
 
 export function markRenderEventTimeAndConfig(
   expirationTime: ExpirationTime,
-  suspenseConfig: null | SuspenseConfig,
+  suspenseConfig: null | SuspenseConfig
 ): void {
   if (
     expirationTime < workInProgressRootLatestProcessedExpirationTime &&
@@ -1376,7 +1376,7 @@ export function markRenderEventTimeAndConfig(
 }
 
 export function markUnprocessedUpdateTime(
-  expirationTime: ExpirationTime,
+  expirationTime: ExpirationTime
 ): void {
   if (expirationTime > workInProgressRootNextUnprocessedUpdateTime) {
     workInProgressRootNextUnprocessedUpdateTime = expirationTime;
@@ -1409,7 +1409,7 @@ export function renderDidSuspendDelayIfPossible(): void {
     markRootSuspendedAtTime(workInProgressRoot, renderExpirationTime);
     markRootUpdatedAtTime(
       workInProgressRoot,
-      workInProgressRootNextUnprocessedUpdateTime,
+      workInProgressRootNextUnprocessedUpdateTime
     );
   }
 }
@@ -1437,7 +1437,7 @@ function inferTimeFromExpirationTime(expirationTime: ExpirationTime): number {
 
 function inferTimeFromExpirationTimeWithSuspenseConfig(
   expirationTime: ExpirationTime,
-  suspenseConfig: SuspenseConfig,
+  suspenseConfig: SuspenseConfig
 ): number {
   // We don't know exactly when the update was scheduled, but we can infer an
   // approximate start time from the expiration time by subtracting the timeout
@@ -1707,7 +1707,7 @@ function commitRoot(root) {
   const renderPriorityLevel = getCurrentPriorityLevel();
   runWithPriority(
     ImmediatePriority,
-    commitRootImpl.bind(null, root, renderPriorityLevel),
+    commitRootImpl.bind(null, root, renderPriorityLevel)
   );
   return null;
 }
@@ -1726,7 +1726,7 @@ function commitRootImpl(root, renderPriorityLevel) {
 
   invariant(
     (executionContext & (RenderContext | CommitContext)) === NoContext,
-    'Should not already be working.',
+    "Should not already be working."
   );
 
   const finishedWork = root.finishedWork;
@@ -1739,8 +1739,8 @@ function commitRootImpl(root, renderPriorityLevel) {
 
   invariant(
     finishedWork !== root.current,
-    'Cannot commit the same tree as before. This error is likely caused by ' +
-      'a bug in React. Please file an issue.',
+    "Cannot commit the same tree as before. This error is likely caused by " +
+      "a bug in React. Please file an issue."
   );
 
   // commitRoot never returns a continuation; it always finishes synchronously.
@@ -1755,12 +1755,12 @@ function commitRootImpl(root, renderPriorityLevel) {
   // Update the first and last pending times on this root. The new first
   // pending time is whatever is left on the root fiber.
   const remainingExpirationTimeBeforeCommit = getRemainingExpirationTime(
-    finishedWork,
+    finishedWork
   );
   markRootFinishedAtTime(
     root,
     expirationTime,
-    remainingExpirationTimeBeforeCommit,
+    remainingExpirationTimeBeforeCommit
   );
 
   if (root === workInProgressRoot) {
@@ -1814,7 +1814,7 @@ function commitRootImpl(root, renderPriorityLevel) {
       if (__DEV__) {
         invokeGuardedCallback(null, commitBeforeMutationEffects, null);
         if (hasCaughtError()) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
+          invariant(nextEffect !== null, "Should be working on an effect.");
           const error = clearCaughtError();
           captureCommitPhaseError(nextEffect, error);
           nextEffect = nextEffect.nextEffect;
@@ -1823,7 +1823,7 @@ function commitRootImpl(root, renderPriorityLevel) {
         try {
           commitBeforeMutationEffects();
         } catch (error) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
+          invariant(nextEffect !== null, "Should be working on an effect.");
           captureCommitPhaseError(nextEffect, error);
           nextEffect = nextEffect.nextEffect;
         }
@@ -1847,10 +1847,10 @@ function commitRootImpl(root, renderPriorityLevel) {
           commitMutationEffects,
           null,
           root,
-          renderPriorityLevel,
+          renderPriorityLevel
         );
         if (hasCaughtError()) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
+          invariant(nextEffect !== null, "Should be working on an effect.");
           const error = clearCaughtError();
           captureCommitPhaseError(nextEffect, error);
           nextEffect = nextEffect.nextEffect;
@@ -1859,7 +1859,7 @@ function commitRootImpl(root, renderPriorityLevel) {
         try {
           commitMutationEffects(root, renderPriorityLevel);
         } catch (error) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
+          invariant(nextEffect !== null, "Should be working on an effect.");
           captureCommitPhaseError(nextEffect, error);
           nextEffect = nextEffect.nextEffect;
         }
@@ -1886,10 +1886,10 @@ function commitRootImpl(root, renderPriorityLevel) {
           commitLayoutEffects,
           null,
           root,
-          expirationTime,
+          expirationTime
         );
         if (hasCaughtError()) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
+          invariant(nextEffect !== null, "Should be working on an effect.");
           const error = clearCaughtError();
           captureCommitPhaseError(nextEffect, error);
           nextEffect = nextEffect.nextEffect;
@@ -1898,7 +1898,7 @@ function commitRootImpl(root, renderPriorityLevel) {
         try {
           commitLayoutEffects(root, expirationTime);
         } catch (error) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
+          invariant(nextEffect !== null, "Should be working on an effect.");
           captureCommitPhaseError(nextEffect, error);
           nextEffect = nextEffect.nextEffect;
         }
@@ -1967,7 +1967,7 @@ function commitRootImpl(root, renderPriorityLevel) {
           scheduleInteractions(
             root,
             expirationTimes[i],
-            root.memoizedInteractions,
+            root.memoizedInteractions
           );
         }
       }
@@ -2134,7 +2134,7 @@ function commitMutationEffects(root: FiberRoot, renderPriorityLevel) {
 
 function commitLayoutEffects(
   root: FiberRoot,
-  committedExpirationTime: ExpirationTime,
+  committedExpirationTime: ExpirationTime
 ) {
   // TODO: Should probably move the bulk of this function to commitWork.
   while (nextEffect !== null) {
@@ -2149,7 +2149,7 @@ function commitLayoutEffects(
         root,
         current,
         nextEffect,
-        committedExpirationTime,
+        committedExpirationTime
       );
     }
 
@@ -2185,7 +2185,7 @@ function flushPassiveEffectsImpl() {
 
   invariant(
     (executionContext & (RenderContext | CommitContext)) === NoContext,
-    'Cannot flush passive effects while already rendering.',
+    "Cannot flush passive effects while already rendering."
   );
   const prevExecutionContext = executionContext;
   executionContext |= CommitContext;
@@ -2200,7 +2200,7 @@ function flushPassiveEffectsImpl() {
       setCurrentDebugFiberInDEV(effect);
       invokeGuardedCallback(null, commitPassiveHookEffects, null, effect);
       if (hasCaughtError()) {
-        invariant(effect !== null, 'Should be working on an effect.');
+        invariant(effect !== null, "Should be working on an effect.");
         const error = clearCaughtError();
         captureCommitPhaseError(effect, error);
       }
@@ -2209,7 +2209,7 @@ function flushPassiveEffectsImpl() {
       try {
         commitPassiveHookEffects(effect);
       } catch (error) {
-        invariant(effect !== null, 'Should be working on an effect.');
+        invariant(effect !== null, "Should be working on an effect.");
         captureCommitPhaseError(effect, error);
       }
     }
@@ -2262,7 +2262,7 @@ export const onUncaughtError = prepareToThrowUncaughtError;
 function captureCommitPhaseErrorOnRoot(
   rootFiber: Fiber,
   sourceFiber: Fiber,
-  error: mixed,
+  error: mixed
 ) {
   const errorInfo = createCapturedValue(error, sourceFiber);
   const update = createRootErrorUpdate(rootFiber, errorInfo, Sync);
@@ -2291,8 +2291,8 @@ export function captureCommitPhaseError(sourceFiber: Fiber, error: mixed) {
       const ctor = fiber.type;
       const instance = fiber.stateNode;
       if (
-        typeof ctor.getDerivedStateFromError === 'function' ||
-        (typeof instance.componentDidCatch === 'function' &&
+        typeof ctor.getDerivedStateFromError === "function" ||
+        (typeof instance.componentDidCatch === "function" &&
           !isAlreadyFailedLegacyErrorBoundary(instance))
       ) {
         const errorInfo = createCapturedValue(error, sourceFiber);
@@ -2300,7 +2300,7 @@ export function captureCommitPhaseError(sourceFiber: Fiber, error: mixed) {
           fiber,
           errorInfo,
           // TODO: This is always sync
-          Sync,
+          Sync
         );
         enqueueUpdate(fiber, update);
         const root = markUpdateTimeFromFiberToRoot(fiber, Sync);
@@ -2318,7 +2318,7 @@ export function captureCommitPhaseError(sourceFiber: Fiber, error: mixed) {
 export function pingSuspendedRoot(
   root: FiberRoot,
   thenable: Thenable,
-  suspendedTime: ExpirationTime,
+  suspendedTime: ExpirationTime
 ) {
   const pingCache = root.pingCache;
   if (pingCache !== null) {
@@ -2384,7 +2384,7 @@ export function pingSuspendedRoot(
 
 function retryTimedOutBoundary(
   boundaryFiber: Fiber,
-  retryTime: ExpirationTime,
+  retryTime: ExpirationTime
 ) {
   // The boundary fiber (a Suspense component or SuspenseList component)
   // previously was rendered in its fallback state. One of the promises that
@@ -2396,7 +2396,7 @@ function retryTimedOutBoundary(
     retryTime = computeExpirationForFiber(
       currentTime,
       boundaryFiber,
-      suspenseConfig,
+      suspenseConfig
     );
   }
   // TODO: Special case idle priority?
@@ -2434,8 +2434,8 @@ export function resolveRetryThenable(boundaryFiber: Fiber, thenable: Thenable) {
       default:
         invariant(
           false,
-          'Pinged unknown suspense boundary type. ' +
-            'This is probably a bug in React.',
+          "Pinged unknown suspense boundary type. " +
+            "This is probably a bug in React."
         );
     }
   } else {
@@ -2464,22 +2464,22 @@ function jnd(timeElapsed: number) {
   return timeElapsed < 120
     ? 120
     : timeElapsed < 480
-      ? 480
-      : timeElapsed < 1080
-        ? 1080
-        : timeElapsed < 1920
-          ? 1920
-          : timeElapsed < 3000
-            ? 3000
-            : timeElapsed < 4320
-              ? 4320
-              : ceil(timeElapsed / 1960) * 1960;
+    ? 480
+    : timeElapsed < 1080
+    ? 1080
+    : timeElapsed < 1920
+    ? 1920
+    : timeElapsed < 3000
+    ? 3000
+    : timeElapsed < 4320
+    ? 4320
+    : ceil(timeElapsed / 1960) * 1960;
 }
 
 function computeMsUntilSuspenseLoadingDelay(
   mostRecentEventTime: ExpirationTime,
   committedExpirationTime: ExpirationTime,
-  suspenseConfig: SuspenseConfig,
+  suspenseConfig: SuspenseConfig
 ) {
   const busyMinDurationMs = (suspenseConfig.busyMinDurationMs: any) | 0;
   if (busyMinDurationMs <= 0) {
@@ -2491,7 +2491,7 @@ function computeMsUntilSuspenseLoadingDelay(
   const currentTimeMs: number = now();
   const eventTimeMs: number = inferTimeFromExpirationTimeWithSuspenseConfig(
     mostRecentEventTime,
-    suspenseConfig,
+    suspenseConfig
   );
   const timeElapsed = currentTimeMs - eventTimeMs;
   if (timeElapsed <= busyDelayMs) {
@@ -2510,10 +2510,10 @@ function checkForNestedUpdates() {
     rootWithNestedUpdates = null;
     invariant(
       false,
-      'Maximum update depth exceeded. This can happen when a component ' +
-        'repeatedly calls setState inside componentWillUpdate or ' +
-        'componentDidUpdate. React limits the number of nested updates to ' +
-        'prevent infinite loops.',
+      "Maximum update depth exceeded. This can happen when a component " +
+        "repeatedly calls setState inside componentWillUpdate or " +
+        "componentDidUpdate. React limits the number of nested updates to " +
+        "prevent infinite loops."
     );
   }
 
@@ -2522,10 +2522,10 @@ function checkForNestedUpdates() {
       nestedPassiveUpdateCount = 0;
       warning(
         false,
-        'Maximum update depth exceeded. This can happen when a component ' +
+        "Maximum update depth exceeded. This can happen when a component " +
           "calls setState inside useEffect, but useEffect either doesn't " +
-          'have a dependency array, or one of the dependencies changes on ' +
-          'every render.',
+          "have a dependency array, or one of the dependencies changes on " +
+          "every render."
       );
     }
   }
@@ -2556,7 +2556,7 @@ function stopInterruptedWorkLoopTimer() {
 
 function checkForInterruption(
   fiberThatReceivedUpdate: Fiber,
-  updateExpirationTime: ExpirationTime,
+  updateExpirationTime: ExpirationTime
 ) {
   if (
     enableUserTimingAPI &&
@@ -2584,7 +2584,7 @@ function warnAboutUpdateOnUnmountedFiberInDEV(fiber) {
     }
     // We show the whole stack but dedupe on the top component's name because
     // the problematic code almost always lies inside that component.
-    const componentName = getComponentName(fiber.type) || 'ReactComponent';
+    const componentName = getComponentName(fiber.type) || "ReactComponent";
     if (didWarnStateUpdateForUnmountedComponent !== null) {
       if (didWarnStateUpdateForUnmountedComponent.has(componentName)) {
         return;
@@ -2596,12 +2596,12 @@ function warnAboutUpdateOnUnmountedFiberInDEV(fiber) {
     warningWithoutStack(
       false,
       "Can't perform a React state update on an unmounted component. This " +
-        'is a no-op, but it indicates a memory leak in your application. To ' +
-        'fix, cancel all subscriptions and asynchronous tasks in %s.%s',
+        "is a no-op, but it indicates a memory leak in your application. To " +
+        "fix, cancel all subscriptions and asynchronous tasks in %s.%s",
       tag === ClassComponent
-        ? 'the componentWillUnmount method'
-        : 'a useEffect cleanup function',
-      getStackByFiberInDevAndProd(fiber),
+        ? "the componentWillUnmount method"
+        : "a useEffect cleanup function",
+      getStackByFiberInDevAndProd(fiber)
     );
   }
 }
@@ -2618,15 +2618,15 @@ if (__DEV__ && replayFailedUnitOfWorkWithInvokeGuardedCallback) {
     // fiber. If beginWork throws, we'll use this to reset the state.
     const originalWorkInProgressCopy = assignFiberPropertiesInDEV(
       dummyFiber,
-      unitOfWork,
+      unitOfWork
     );
     try {
       return originalBeginWork(current, unitOfWork, expirationTime);
     } catch (originalError) {
       if (
         originalError !== null &&
-        typeof originalError === 'object' &&
-        typeof originalError.then === 'function'
+        typeof originalError === "object" &&
+        typeof originalError.then === "function"
       ) {
         // Don't replay promises. Treat everything else like an error.
         throw originalError;
@@ -2657,7 +2657,7 @@ if (__DEV__ && replayFailedUnitOfWorkWithInvokeGuardedCallback) {
         null,
         current,
         unitOfWork,
-        expirationTime,
+        expirationTime
       );
 
       if (hasCaughtError()) {
@@ -2681,25 +2681,25 @@ function warnAboutInvalidUpdatesOnClassComponentsInDEV(fiber) {
   if (__DEV__) {
     if (fiber.tag === ClassComponent) {
       switch (ReactCurrentDebugFiberPhaseInDEV) {
-        case 'getChildContext':
+        case "getChildContext":
           if (didWarnAboutUpdateInGetChildContext) {
             return;
           }
           warningWithoutStack(
             false,
-            'setState(...): Cannot call setState() inside getChildContext()',
+            "setState(...): Cannot call setState() inside getChildContext()"
           );
           didWarnAboutUpdateInGetChildContext = true;
           break;
-        case 'render':
+        case "render":
           if (didWarnAboutUpdateInRender) {
             return;
           }
           warningWithoutStack(
             false,
-            'Cannot update during an existing state transition (such as ' +
-              'within `render`). Render methods should be a pure function of ' +
-              'props and state.',
+            "Cannot update during an existing state transition (such as " +
+              "within `render`). Render methods should be a pure function of " +
+              "props and state."
           );
           didWarnAboutUpdateInRender = true;
           break;
@@ -2709,7 +2709,7 @@ function warnAboutInvalidUpdatesOnClassComponentsInDEV(fiber) {
 }
 
 // a 'shared' variable that changes when act() opens/closes in tests.
-export const IsThisRendererActing = {current: (false: boolean)};
+export const IsThisRendererActing = { current: (false: boolean) };
 
 export function warnIfNotScopedWithMatchingAct(fiber: Fiber): void {
   if (__DEV__) {
@@ -2721,18 +2721,18 @@ export function warnIfNotScopedWithMatchingAct(fiber: Fiber): void {
       warningWithoutStack(
         false,
         "It looks like you're using the wrong act() around your test interactions.\n" +
-          'Be sure to use the matching version of act() corresponding to your renderer:\n\n' +
-          '// for react-dom:\n' +
+          "Be sure to use the matching version of act() corresponding to your renderer:\n\n" +
+          "// for react-dom:\n" +
           "import {act} from 'react-dom/test-utils';\n" +
-          '// ...\n' +
-          'act(() => ...);\n\n' +
-          '// for react-test-renderer:\n' +
+          "// ...\n" +
+          "act(() => ...);\n\n" +
+          "// for react-test-renderer:\n" +
           "import TestRenderer from 'react-test-renderer';\n" +
-          'const {act} = TestRenderer;\n' +
-          '// ...\n' +
-          'act(() => ...);' +
-          '%s',
-        getStackByFiberInDevAndProd(fiber),
+          "const {act} = TestRenderer;\n" +
+          "// ...\n" +
+          "act(() => ...);" +
+          "%s",
+        getStackByFiberInDevAndProd(fiber)
       );
     }
   }
@@ -2748,19 +2748,19 @@ export function warnIfNotCurrentlyActingEffectsInDEV(fiber: Fiber): void {
     ) {
       warningWithoutStack(
         false,
-        'An update to %s ran an effect, but was not wrapped in act(...).\n\n' +
-          'When testing, code that causes React state updates should be ' +
-          'wrapped into act(...):\n\n' +
-          'act(() => {\n' +
-          '  /* fire events that update state */\n' +
-          '});\n' +
-          '/* assert on the output */\n\n' +
+        "An update to %s ran an effect, but was not wrapped in act(...).\n\n" +
+          "When testing, code that causes React state updates should be " +
+          "wrapped into act(...):\n\n" +
+          "act(() => {\n" +
+          "  /* fire events that update state */\n" +
+          "});\n" +
+          "/* assert on the output */\n\n" +
           "This ensures that you're testing the behavior the user would see " +
-          'in the browser.' +
-          ' Learn more at https://fb.me/react-wrap-tests-with-act' +
-          '%s',
+          "in the browser." +
+          " Learn more at https://fb.me/react-wrap-tests-with-act" +
+          "%s",
         getComponentName(fiber.type),
-        getStackByFiberInDevAndProd(fiber),
+        getStackByFiberInDevAndProd(fiber)
       );
     }
   }
@@ -2776,19 +2776,19 @@ function warnIfNotCurrentlyActingUpdatesInDEV(fiber: Fiber): void {
     ) {
       warningWithoutStack(
         false,
-        'An update to %s inside a test was not wrapped in act(...).\n\n' +
-          'When testing, code that causes React state updates should be ' +
-          'wrapped into act(...):\n\n' +
-          'act(() => {\n' +
-          '  /* fire events that update state */\n' +
-          '});\n' +
-          '/* assert on the output */\n\n' +
+        "An update to %s inside a test was not wrapped in act(...).\n\n" +
+          "When testing, code that causes React state updates should be " +
+          "wrapped into act(...):\n\n" +
+          "act(() => {\n" +
+          "  /* fire events that update state */\n" +
+          "});\n" +
+          "/* assert on the output */\n\n" +
           "This ensures that you're testing the behavior the user would see " +
-          'in the browser.' +
-          ' Learn more at https://fb.me/react-wrap-tests-with-act' +
-          '%s',
+          "in the browser." +
+          " Learn more at https://fb.me/react-wrap-tests-with-act" +
+          "%s",
         getComponentName(fiber.type),
-        getStackByFiberInDevAndProd(fiber),
+        getStackByFiberInDevAndProd(fiber)
       );
     }
   }
@@ -2814,20 +2814,20 @@ export function warnIfUnmockedScheduler(fiber: Fiber) {
         warningWithoutStack(
           false,
           'In Concurrent or Sync modes, the "scheduler" module needs to be mocked ' +
-            'to guarantee consistent behaviour across tests and browsers. ' +
-            'For example, with jest: \n' +
+            "to guarantee consistent behaviour across tests and browsers. " +
+            "For example, with jest: \n" +
             "jest.mock('scheduler', () => require('scheduler/unstable_mock'));\n\n" +
-            'For more info, visit https://fb.me/react-mock-scheduler',
+            "For more info, visit https://fb.me/react-mock-scheduler"
         );
       } else if (warnAboutUnmockedScheduler === true) {
         didWarnAboutUnmockedScheduler = true;
         warningWithoutStack(
           false,
           'Starting from React v17, the "scheduler" module will need to be mocked ' +
-            'to guarantee consistent behaviour across tests and browsers. ' +
-            'For example, with jest: \n' +
+            "to guarantee consistent behaviour across tests and browsers. " +
+            "For example, with jest: \n" +
             "jest.mock('scheduler', () => require('scheduler/unstable_mock'));\n\n" +
-            'For more info, visit https://fb.me/react-mock-scheduler',
+            "For more info, visit https://fb.me/react-mock-scheduler"
         );
       }
     }
@@ -2865,11 +2865,11 @@ export function checkForWrongSuspensePriorityInDEV(sourceFiber: Fiber) {
                   ) {
                     if (componentsThatTriggeredHighPriSuspend === null) {
                       componentsThatTriggeredHighPriSuspend = new Set([
-                        getComponentName(workInProgressNode.type),
+                        getComponentName(workInProgressNode.type)
                       ]);
                     } else {
                       componentsThatTriggeredHighPriSuspend.add(
-                        getComponentName(workInProgressNode.type),
+                        getComponentName(workInProgressNode.type)
                       );
                     }
                     break;
@@ -2896,11 +2896,11 @@ export function checkForWrongSuspensePriorityInDEV(sourceFiber: Fiber) {
                   ) {
                     if (componentsThatTriggeredHighPriSuspend === null) {
                       componentsThatTriggeredHighPriSuspend = new Set([
-                        getComponentName(workInProgressNode.type),
+                        getComponentName(workInProgressNode.type)
                       ]);
                     } else {
                       componentsThatTriggeredHighPriSuspend.add(
-                        getComponentName(workInProgressNode.type),
+                        getComponentName(workInProgressNode.type)
                       );
                     }
                     break;
@@ -2929,23 +2929,23 @@ function flushSuspensePriorityWarningInDEV() {
     if (componentsThatTriggeredHighPriSuspend !== null) {
       const componentNames = [];
       componentsThatTriggeredHighPriSuspend.forEach(name =>
-        componentNames.push(name),
+        componentNames.push(name)
       );
       componentsThatTriggeredHighPriSuspend = null;
 
       if (componentNames.length > 0) {
         warningWithoutStack(
           false,
-          '%s triggered a user-blocking update that suspended.' +
-            '\n\n' +
-            'The fix is to split the update into multiple parts: a user-blocking ' +
-            'update to provide immediate feedback, and another update that ' +
-            'triggers the bulk of the changes.' +
-            '\n\n' +
-            'Refer to the documentation for useTransition to learn how ' +
-            'to implement this pattern.',
+          "%s triggered a user-blocking update that suspended." +
+            "\n\n" +
+            "The fix is to split the update into multiple parts: a user-blocking " +
+            "update to provide immediate feedback, and another update that " +
+            "triggers the bulk of the changes." +
+            "\n\n" +
+            "Refer to the documentation for useTransition to learn how " +
+            "to implement this pattern.",
           // TODO: Add link to React docs with more information, once it exists
-          componentNames.sort().join(', '),
+          componentNames.sort().join(", ")
         );
       }
     }
@@ -3027,10 +3027,10 @@ function startWorkOnPendingInteractions(root, expirationTime) {
     (scheduledInteractions, scheduledExpirationTime) => {
       if (scheduledExpirationTime >= expirationTime) {
         scheduledInteractions.forEach(interaction =>
-          interactions.add(interaction),
+          interactions.add(interaction)
         );
       }
-    },
+    }
   );
 
   // Store the current set of interactions on the FiberRoot for a few reasons:
@@ -3104,7 +3104,7 @@ function finishPendingInteractions(root, committedExpirationTime) {
             }
           });
         }
-      },
+      }
     );
   }
 }

@@ -5,9 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-'use strict';
+"use strict";
 
-export * from './src/Scheduler';
+export * from "./src/Scheduler";
 
 export {
   unstable_flushAllWithoutAsserting,
@@ -17,5 +17,5 @@ export {
   unstable_flushUntilNextPaint,
   unstable_flushAll,
   unstable_yieldValue,
-  unstable_advanceTime,
-} from './src/SchedulerHostConfig.js';
+  unstable_advanceTime
+} from "./src/SchedulerHostConfig.js";

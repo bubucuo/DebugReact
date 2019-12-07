@@ -287,6 +287,10 @@ function checkShouldComponentUpdate(
   }
 
   if (ctor.prototype && ctor.prototype.isPureReactComponent) {
+    console.log(
+      "isPureReactComponent",
+      !shallowEqual(oldProps, newProps) || !shallowEqual(oldState, newState)
+    );
     return (
       !shallowEqual(oldProps, newProps) || !shallowEqual(oldState, newState)
     );
@@ -988,7 +992,6 @@ function resumeMountClassInstance(
       newState,
       nextContext
     );
-
   if (shouldUpdate) {
     // In order to support react-lifecycles-compat polyfilled components,
     // Unsafe lifecycles should not be invoked for components using the new APIs.

@@ -60,7 +60,7 @@ export function forceFrameRate() {
 
 export function reset() {
   if (isFlushing) {
-    throw new Error('Cannot reset while already flushing work.');
+    throw new Error("Cannot reset while already flushing work.");
   }
   currentTime = 0;
   scheduledCallback = null;
@@ -76,7 +76,7 @@ export function reset() {
 // Should only be used via an assertion helper that inspects the yielded values.
 export function unstable_flushNumberOfYields(count: number): void {
   if (isFlushing) {
-    throw new Error('Already flushing work.');
+    throw new Error("Already flushing work.");
   }
   if (scheduledCallback !== null) {
     const cb = scheduledCallback;
@@ -100,7 +100,7 @@ export function unstable_flushNumberOfYields(count: number): void {
 
 export function unstable_flushUntilNextPaint(): void {
   if (isFlushing) {
-    throw new Error('Already flushing work.');
+    throw new Error("Already flushing work.");
   }
   if (scheduledCallback !== null) {
     const cb = scheduledCallback;
@@ -125,7 +125,7 @@ export function unstable_flushUntilNextPaint(): void {
 
 export function unstable_flushExpired() {
   if (isFlushing) {
-    throw new Error('Already flushing work.');
+    throw new Error("Already flushing work.");
   }
   if (scheduledCallback !== null) {
     isFlushing = true;
@@ -143,7 +143,7 @@ export function unstable_flushExpired() {
 export function unstable_flushAllWithoutAsserting(): boolean {
   // Returns false if no work was flushed.
   if (isFlushing) {
-    throw new Error('Already flushing work.');
+    throw new Error("Already flushing work.");
   }
   if (scheduledCallback !== null) {
     const cb = scheduledCallback;
@@ -177,16 +177,16 @@ export function unstable_clearYields(): Array<mixed> {
 export function unstable_flushAll(): void {
   if (yieldedValues !== null) {
     throw new Error(
-      'Log is not empty. Assert on the log of yielded values before ' +
-        'flushing additional work.',
+      "Log is not empty. Assert on the log of yielded values before " +
+        "flushing additional work."
     );
   }
   unstable_flushAllWithoutAsserting();
   if (yieldedValues !== null) {
     throw new Error(
-      'While flushing work, something yielded a value. Use an ' +
-        'assertion helper to assert on the log of yielded values, e.g. ' +
-        'expect(Scheduler).toFlushAndYield([...])',
+      "While flushing work, something yielded a value. Use an " +
+        "assertion helper to assert on the log of yielded values, e.g. " +
+        "expect(Scheduler).toFlushAndYield([...])"
     );
   }
 }
