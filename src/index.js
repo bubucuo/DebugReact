@@ -1,56 +1,70 @@
-import React, { Component, PureComponent, useState } from "react";
-import ReactDOM from "react-dom";
+// import React, { Component, PureComponent, useState } from "react";
+// import ReactDOM from "react-dom";
+
+import React from "./kreact-test/";
+import ReactDOM, { useState } from "./kreact-test/ReactDOM";
+import Component from "./kreact-test/Component";
+
 import "./index.css";
 import TestPage from "./TestPage";
 
-class ClassCmp extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      counter: 0
+console.log("ReactDOM", ReactDOM);
+
+class ClassComponent extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            count: 0
+        };
+    }
+    setCount = () => {
+        console.log("setCount");
+        this.setState({
+            count: this.state.count + 1
+        });
+        // this.setState({
+        //   count: this.state.count + 2
+        // });
+        // console.log("count", this.state.count);
     };
-  }
-  setCounter = () => {
-    this.setState({
-      counter: this.state.counter + 1
-    });
-    // this.setState({
-    //   counter: this.state.counter + 2
-    // });
-    // console.log("counter", this.state.counter);
-  };
-  handle = () => {
-    ReactDOM.render(jsx, document.getElementById("root"));
-  };
-  render() {
-    const { name } = this.props;
-    const { counter } = this.state;
+    handle = () => {
+        ReactDOM.render(jsx, document.getElementById("root"));
+    };
+    render() {
+        const { name } = this.props;
+        const { count } = this.state;
+        return (
+            <div className="classcmp border">
+                <p>{name}</p>
+                <button onClick={this.setCount}>{count}</button>
+                <button onClick={this.handle}>handle</button>
+            </div>
+        );
+    }
+}
+
+// 函数组件
+function FunctionComponent(props) {
+    const [count, setCount] = useState(0);
+    const _setCount = () => {
+        setCount(count + 1);
+    };
     return (
-      <div className="classcmp border">
-        <p>{name}</p>
-        <button onClick={this.setCounter}>{counter}</button>
-        <button onClick={this.handle}>handle</button>
-      </div>
+        <div className="function border">
+            hello, {props.name}
+            <button onClick={_setCount}>count: {count}</button>
+        </div>
     );
-  }
 }
 
-function HookFunction() {
-  const [num, setNum] = useState(0);
-  return (
-    <div className="hook border">
-      <button onClick={() => setNum(num + 1)}>{num}</button>
+const jsx = (
+    <div className="app">
+        <h1>hello, kkb</h1>
+        <FunctionComponent name="function组件" />
+        <ClassComponent name="class组件" />
+        <p>全栈课学习</p>
+        <a href="https://www.kaikeba.com/">跳转</a>
     </div>
-  );
-}
-
-let jsx = (
-  <div className="box">
-    <ClassCmp name="class组件" />
-    <div className="ele border">div元素</div>
-    <HookFunction />
-    <TestPage />
-  </div>
 );
 
 // console.log("omg", Component.prototype, PureComponent.prototype);

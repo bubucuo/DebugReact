@@ -7,6 +7,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.app {
+  margin: 8px;
+  color: red;
+}
+
 .border {
   margin: 10px;
   padding: 10px;
