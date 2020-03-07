@@ -282,7 +282,7 @@ to return true:wantsResponderID|                            |
                                +                            + */
 
 /**
- * A note about event ordering in the `EventPluginHub`.
+ * A note about event ordering in the `EventPluginRegistry`.
  *
  * Suppose plugins are injected in the following order:
  *
@@ -301,7 +301,7 @@ to return true:wantsResponderID|                            |
  * - When returned from `extractEvents`, deferred-dispatched events contain an
  *   "accumulation" of deferred dispatches.
  * - These deferred dispatches are accumulated/collected before they are
- *   returned, but processed at a later time by the `EventPluginHub` (hence the
+ *   returned, but processed at a later time by the `EventPluginRegistry` (hence the
  *   name deferred).
  *
  * In the process of returning their deferred-dispatched events, event plugins
@@ -325,9 +325,9 @@ to return true:wantsResponderID|                            |
  * - `R`s on-demand events (if any)   (dispatched by `R` on-demand)
  * - `S`s on-demand events (if any)   (dispatched by `S` on-demand)
  * - `C`s on-demand events (if any)   (dispatched by `C` on-demand)
- * - `R`s extracted events (if any)   (dispatched by `EventPluginHub`)
- * - `S`s extracted events (if any)   (dispatched by `EventPluginHub`)
- * - `C`s extracted events (if any)   (dispatched by `EventPluginHub`)
+ * - `R`s extracted events (if any)   (dispatched by `EventPluginRegistry`)
+ * - `S`s extracted events (if any)   (dispatched by `EventPluginRegistry`)
+ * - `C`s extracted events (if any)   (dispatched by `EventPluginRegistry`)
  *
  * In the case of `ResponderEventPlugin`: If the `startShouldSetResponder`
  * on-demand dispatch returns `true` (and some other details are satisfied) the
@@ -336,9 +336,9 @@ to return true:wantsResponderID|                            |
  * will appear as follows:
  *
  * - `startShouldSetResponder` (`ResponderEventPlugin` dispatches on-demand)
- * - `touchStartCapture`       (`EventPluginHub` dispatches as usual)
- * - `touchStart`              (`EventPluginHub` dispatches as usual)
- * - `responderGrant/Reject`   (`EventPluginHub` dispatches as usual)
+ * - `touchStartCapture`       (`EventPluginRegistry` dispatches as usual)
+ * - `touchStart`              (`EventPluginRegistry` dispatches as usual)
+ * - `responderGrant/Reject`   (`EventPluginRegistry` dispatches as usual)
  */
 
 function setResponderAndExtractTransfer(
@@ -350,10 +350,10 @@ function setResponderAndExtractTransfer(
   const shouldSetEventType = isStartish(topLevelType)
     ? eventTypes.startShouldSetResponder
     : isMoveish(topLevelType)
-      ? eventTypes.moveShouldSetResponder
-      : topLevelType === TOP_SELECTION_CHANGE
-        ? eventTypes.selectionChangeShouldSetResponder
-        : eventTypes.scrollShouldSetResponder;
+    ? eventTypes.moveShouldSetResponder
+    : topLevelType === TOP_SELECTION_CHANGE
+    ? eventTypes.selectionChangeShouldSetResponder
+    : eventTypes.scrollShouldSetResponder;
 
   // TODO: stop one short of the current responder.
   const bubbleShouldSetFrom = !responderInst
@@ -515,9 +515,11 @@ const ResponderEventPlugin = {
       if (trackedTouchCount >= 0) {
         trackedTouchCount -= 1;
       } else {
-        console.warn(
-          'Ended a touch event which was not counted in `trackedTouchCount`.',
-        );
+        if (__DEV__) {
+          console.warn(
+            'Ended a touch event which was not counted in `trackedTouchCount`.',
+          );
+        }
         return null;
       }
     }
@@ -548,10 +550,10 @@ const ResponderEventPlugin = {
     const incrementalTouch = isResponderTouchStart
       ? eventTypes.responderStart
       : isResponderTouchMove
-        ? eventTypes.responderMove
-        : isResponderTouchEnd
-          ? eventTypes.responderEnd
-          : null;
+      ? eventTypes.responderMove
+      : isResponderTouchEnd
+      ? eventTypes.responderEnd
+      : null;
 
     if (incrementalTouch) {
       const gesture = ResponderSyntheticEvent.getPooled(
@@ -575,8 +577,8 @@ const ResponderEventPlugin = {
     const finalTouch = isResponderTerminate
       ? eventTypes.responderTerminate
       : isResponderRelease
-        ? eventTypes.responderRelease
-        : null;
+      ? eventTypes.responderRelease
+      : null;
     if (finalTouch) {
       const finalEvent = ResponderSyntheticEvent.getPooled(
         finalTouch,

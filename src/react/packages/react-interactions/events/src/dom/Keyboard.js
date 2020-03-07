@@ -13,7 +13,7 @@ import type {
 } from 'shared/ReactDOMTypes';
 import type {ReactEventResponderListener} from 'shared/ReactTypes';
 
-import React from 'react';
+import * as React from 'react';
 import {DiscreteEvent} from 'shared/ReactTypes';
 import {isVirtualClick} from './shared';
 
@@ -229,13 +229,14 @@ const keyboardResponderImpl = {
   },
 };
 
-export const KeyboardResponder = React.unstable_createResponder(
+// $FlowFixMe Can't add generic types without causing a parsing/syntax errors
+export const KeyboardResponder = React.DEPRECATED_createResponder(
   'Keyboard',
   keyboardResponderImpl,
 );
 
 export function useKeyboard(
   props: KeyboardProps,
-): ReactEventResponderListener<any, any> {
-  return React.unstable_useResponder(KeyboardResponder, props);
+): ?ReactEventResponderListener<any, any> {
+  return React.DEPRECATED_useResponder(KeyboardResponder, props);
 }

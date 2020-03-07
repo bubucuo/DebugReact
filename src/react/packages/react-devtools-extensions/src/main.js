@@ -4,11 +4,7 @@ import {createElement} from 'react';
 import {createRoot, flushSync} from 'react-dom';
 import Bridge from 'react-devtools-shared/src/bridge';
 import Store from 'react-devtools-shared/src/devtools/store';
-import {
-  createViewElementSource,
-  getBrowserName,
-  getBrowserTheme,
-} from './utils';
+import {getBrowserName, getBrowserTheme} from './utils';
 import {LOCAL_STORAGE_TRACE_UPDATES_ENABLED_KEY} from 'react-devtools-shared/src/constants';
 import {
   getSavedComponentFilters,
@@ -155,10 +151,54 @@ function createPanelIfReactLoaded() {
           },
         );
 
-        const viewElementSourceFunction = createViewElementSource(
-          bridge,
-          store,
-        );
+        const viewAttributeSourceFunction = (id, path) => {
+          const rendererID = store.getRendererIDForElement(id);
+          if (rendererID != null) {
+            // Ask the renderer interface to find the specified attribute,
+            // and store it as a global variable on the window.
+            bridge.send('viewAttributeSource', {id, path, rendererID});
+
+            setTimeout(() => {
+              // Ask Chrome to display the location of the attribute,
+              // assuming the renderer found a match.
+              chrome.devtools.inspectedWindow.eval(`
+                if (window.$attribute != null) {
+                  inspect(window.$attribute);
+                }
+              `);
+            }, 100);
+          }
+        };
+
+        const viewElementSourceFunction = id => {
+          const rendererID = store.getRendererIDForElement(id);
+          if (rendererID != null) {
+            // Ask the renderer interface to determine the component function,
+            // and store it as a global variable on the window
+            bridge.send('viewElementSource', {id, rendererID});
+
+            setTimeout(() => {
+              // Ask Chrome to display the location of the component function,
+              // or a render method if it is a Class (ideally Class instance, not type)
+              // assuming the renderer found one.
+              chrome.devtools.inspectedWindow.eval(`
+                if (window.$type != null) {
+                  if (
+                    window.$type &&
+                    window.$type.prototype &&
+                    window.$type.prototype.isReactComponent
+                  ) {
+                    // inspect Component.render, not constructor
+                    inspect(window.$type.prototype.render);
+                  } else {
+                    // inspect Functional Component
+                    inspect(window.$type);
+                  }
+                }
+              `);
+            }, 100);
+          }
+        };
 
         root = createRoot(document.createElement('div'));
 
@@ -170,11 +210,13 @@ function createPanelIfReactLoaded() {
               bridge,
               browserTheme: getBrowserTheme(),
               componentsPortalContainer,
+              enabledInspectedElementContextMenu: true,
               overrideTab,
               profilerPortalContainer,
               showTabBar: false,
-              warnIfUnsupportedVersionDetected: true,
               store,
+              warnIfUnsupportedVersionDetected: true,
+              viewAttributeSourceFunction,
               viewElementSourceFunction,
             }),
           );
@@ -229,7 +271,7 @@ function createPanelIfReactLoaded() {
         // When the user chooses a different node in the browser Elements tab,
         // copy it over to the hook object so that we can sync the selection.
         chrome.devtools.inspectedWindow.eval(
-          '(window.__REACT_DEVTOOLS_GLOBAL_HOOK__.$0 !== $0) ?' +
+          '(window.__REACT_DEVTOOLS_GLOBAL_HOOK__ && window.__REACT_DEVTOOLS_GLOBAL_HOOK__.$0 !== $0) ?' +
             '(window.__REACT_DEVTOOLS_GLOBAL_HOOK__.$0 = $0, true) :' +
             'false',
           (didSelectionChange, evalError) => {
@@ -313,11 +355,9 @@ function createPanelIfReactLoaded() {
 
         // It's easiest to recreate the DevTools panel (to clean up potential stale state).
         // We can revisit this in the future as a small optimization.
-        flushSync(() => {
-          root.unmount(() => {
-            initBridgeAndStore();
-          });
-        });
+        flushSync(() => root.unmount());
+
+        initBridgeAndStore();
       });
     },
   );

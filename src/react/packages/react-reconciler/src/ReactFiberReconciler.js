@@ -37,7 +37,6 @@ import {
 } from 'shared/ReactWorkTags';
 import getComponentName from 'shared/getComponentName';
 import invariant from 'shared/invariant';
-import warningWithoutStack from 'shared/warningWithoutStack';
 import ReactSharedInternals from 'shared/ReactSharedInternals';
 
 import {getPublicInstance} from './ReactFiberHostConfig';
@@ -48,7 +47,7 @@ import {
   isContextProvider as isLegacyContextProvider,
 } from './ReactFiberContext';
 import {createFiberRoot} from './ReactFiberRoot';
-import {injectInternals} from './ReactFiberDevToolsHook';
+import {injectInternals, onScheduleRoot} from './ReactFiberDevToolsHook';
 import {
   requestCurrentTimeForUpdate,
   computeExpirationForFiber,
@@ -69,17 +68,16 @@ import {
   IsThisRendererActing,
 } from './ReactFiberWorkLoop';
 import {createUpdate, enqueueUpdate} from './ReactUpdateQueue';
-import ReactFiberInstrumentation from './ReactFiberInstrumentation';
 import {
   getStackByFiberInDevAndProd,
-  phase as ReactCurrentFiberPhase,
+  isRendering as ReactCurrentFiberIsRendering,
   current as ReactCurrentFiberCurrent,
 } from './ReactCurrentFiber';
 import {StrictMode} from './ReactTypeOfMode';
 import {
   Sync,
+  ContinuousHydration,
   computeInteractiveExpiration,
-  computeContinuousHydrationExpiration,
 } from './ReactFiberExpirationTime';
 import {requestCurrentSuspenseConfig} from './ReactFiberSuspenseConfig';
 import {
@@ -88,6 +86,11 @@ import {
   setRefreshHandler,
   findHostInstancesForRefresh,
 } from './ReactFiberHotReloading';
+
+// used by isTestEnvironment builds
+import enqueueTask from 'shared/enqueueTask';
+import * as Scheduler from 'scheduler';
+// end isTestEnvironment imports
 
 type OpaqueRoot = FiberRoot;
 
@@ -182,8 +185,7 @@ function findHostInstanceWithWarning(
       if (!didWarnAboutFindNodeInStrictMode[componentName]) {
         didWarnAboutFindNodeInStrictMode[componentName] = true;
         if (fiber.mode & StrictMode) {
-          warningWithoutStack(
-            false,
+          console.error(
             '%s is deprecated in StrictMode. ' +
               '%s was passed an instance of %s which is inside StrictMode. ' +
               'Instead, add a ref directly to the element you want to reference. ' +
@@ -195,8 +197,7 @@ function findHostInstanceWithWarning(
             getStackByFiberInDevAndProd(hostFiber),
           );
         } else {
-          warningWithoutStack(
-            false,
+          console.error(
             '%s is deprecated in StrictMode. ' +
               '%s was passed an instance of %s which renders StrictMode children. ' +
               'Instead, add a ref directly to the element you want to reference. ' +
@@ -230,6 +231,9 @@ export function updateContainer(
   parentComponent: ?React$Component<any, any>,
   callback: ?Function,
 ): ExpirationTime {
+  if (__DEV__) {
+    onScheduleRoot(container, element);
+  }
   const current = container.current;
   const currentTime = requestCurrentTimeForUpdate();
   if (__DEV__) {
@@ -246,18 +250,6 @@ export function updateContainer(
     suspenseConfig,
   );
 
-  if (__DEV__) {
-    if (ReactFiberInstrumentation.debugTool) {
-      if (current.alternate === null) {
-        ReactFiberInstrumentation.debugTool.onMountContainer(container);
-      } else if (element === null) {
-        ReactFiberInstrumentation.debugTool.onUnmountContainer(container);
-      } else {
-        ReactFiberInstrumentation.debugTool.onUpdateContainer(container);
-      }
-    }
-  }
-
   const context = getContextForSubtree(parentComponent);
   if (container.context === null) {
     container.context = context;
@@ -267,13 +259,12 @@ export function updateContainer(
 
   if (__DEV__) {
     if (
-      ReactCurrentFiberPhase === 'render' &&
+      ReactCurrentFiberIsRendering &&
       ReactCurrentFiberCurrent !== null &&
       !didWarnAboutNestedUpdates
     ) {
       didWarnAboutNestedUpdates = true;
-      warningWithoutStack(
-        false,
+      console.error(
         'Render methods should be a pure function of props and state; ' +
           'triggering nested component updates from render is not allowed. ' +
           'If necessary, trigger nested updates in componentDidUpdate.\n\n' +
@@ -290,12 +281,15 @@ export function updateContainer(
 
   callback = callback === undefined ? null : callback;
   if (callback !== null) {
-    warningWithoutStack(
-      typeof callback === 'function',
-      'render(...): Expected the last optional `callback` argument to be a ' +
-        'function. Instead received: %s.',
-      callback,
-    );
+    if (__DEV__) {
+      if (typeof callback !== 'function') {
+        console.error(
+          'render(...): Expected the last optional `callback` argument to be a ' +
+            'function. Instead received: %s.',
+          callback,
+        );
+      }
+    }
     update.callback = callback;
   }
 
@@ -395,11 +389,8 @@ export function attemptContinuousHydration(fiber: Fiber): void {
     // Suspense.
     return;
   }
-  let expTime = computeContinuousHydrationExpiration(
-    requestCurrentTimeForUpdate(),
-  );
-  scheduleWork(fiber, expTime);
-  markRetryTimeIfNotHydrated(fiber, expTime);
+  scheduleWork(fiber, ContinuousHydration);
+  markRetryTimeIfNotHydrated(fiber, ContinuousHydration);
 }
 
 export function attemptHydrationAtCurrentPriority(fiber: Fiber): void {
@@ -548,4 +539,186 @@ export function injectIntoDevTools(devToolsConfig: DevToolsConfig): boolean {
     // Enables DevTools to append owner stacks to error messages in DEV mode.
     getCurrentFiber: __DEV__ ? () => ReactCurrentFiberCurrent : null,
   });
+}
+
+const {IsSomeRendererActing} = ReactSharedInternals;
+const isSchedulerMocked =
+  typeof Scheduler.unstable_flushAllWithoutAsserting === 'function';
+const flushWork =
+  Scheduler.unstable_flushAllWithoutAsserting ||
+  function() {
+    let didFlushWork = false;
+    while (flushPassiveEffects()) {
+      didFlushWork = true;
+    }
+
+    return didFlushWork;
+  };
+
+function flushWorkAndMicroTasks(onDone: (err: ?Error) => void) {
+  try {
+    flushWork();
+    enqueueTask(() => {
+      if (flushWork()) {
+        flushWorkAndMicroTasks(onDone);
+      } else {
+        onDone();
+      }
+    });
+  } catch (err) {
+    onDone(err);
+  }
+}
+
+// we track the 'depth' of the act() calls with this counter,
+// so we can tell if any async act() calls try to run in parallel.
+
+let actingUpdatesScopeDepth = 0;
+let didWarnAboutUsingActInProd = false;
+
+// eslint-disable-next-line no-inner-declarations
+export function act(callback: () => Thenable) {
+  if (!__DEV__) {
+    if (didWarnAboutUsingActInProd === false) {
+      didWarnAboutUsingActInProd = true;
+      // eslint-disable-next-line react-internal/no-production-logging
+      console.error(
+        'act(...) is not supported in production builds of React, and might not behave as expected.',
+      );
+    }
+  }
+
+  let previousActingUpdatesScopeDepth = actingUpdatesScopeDepth;
+  let previousIsSomeRendererActing;
+  let previousIsThisRendererActing;
+  actingUpdatesScopeDepth++;
+
+  previousIsSomeRendererActing = IsSomeRendererActing.current;
+  previousIsThisRendererActing = IsThisRendererActing.current;
+  IsSomeRendererActing.current = true;
+  IsThisRendererActing.current = true;
+
+  function onDone() {
+    actingUpdatesScopeDepth--;
+    IsSomeRendererActing.current = previousIsSomeRendererActing;
+    IsThisRendererActing.current = previousIsThisRendererActing;
+    if (__DEV__) {
+      if (actingUpdatesScopeDepth > previousActingUpdatesScopeDepth) {
+        // if it's _less than_ previousActingUpdatesScopeDepth, then we can assume the 'other' one has warned
+        console.error(
+          'You seem to have overlapping act() calls, this is not supported. ' +
+            'Be sure to await previous act() calls before making a new one. ',
+        );
+      }
+    }
+  }
+
+  let result;
+  try {
+    result = batchedUpdates(callback);
+  } catch (error) {
+    // on sync errors, we still want to 'cleanup' and decrement actingUpdatesScopeDepth
+    onDone();
+    throw error;
+  }
+
+  if (
+    result !== null &&
+    typeof result === 'object' &&
+    typeof result.then === 'function'
+  ) {
+    // setup a boolean that gets set to true only
+    // once this act() call is await-ed
+    let called = false;
+    if (__DEV__) {
+      if (typeof Promise !== 'undefined') {
+        //eslint-disable-next-line no-undef
+        Promise.resolve()
+          .then(() => {})
+          .then(() => {
+            if (called === false) {
+              console.error(
+                'You called act(async () => ...) without await. ' +
+                  'This could lead to unexpected testing behaviour, interleaving multiple act ' +
+                  'calls and mixing their scopes. You should - await act(async () => ...);',
+              );
+            }
+          });
+      }
+    }
+
+    // in the async case, the returned thenable runs the callback, flushes
+    // effects and  microtasks in a loop until flushPassiveEffects() === false,
+    // and cleans up
+    return {
+      then(resolve: () => void, reject: (?Error) => void) {
+        called = true;
+        result.then(
+          () => {
+            if (
+              actingUpdatesScopeDepth > 1 ||
+              (isSchedulerMocked === true &&
+                previousIsSomeRendererActing === true)
+            ) {
+              onDone();
+              resolve();
+              return;
+            }
+            // we're about to exit the act() scope,
+            // now's the time to flush tasks/effects
+            flushWorkAndMicroTasks((err: ?Error) => {
+              onDone();
+              if (err) {
+                reject(err);
+              } else {
+                resolve();
+              }
+            });
+          },
+          err => {
+            onDone();
+            reject(err);
+          },
+        );
+      },
+    };
+  } else {
+    if (__DEV__) {
+      if (result !== undefined) {
+        console.error(
+          'The callback passed to act(...) function ' +
+            'must return undefined, or a Promise. You returned %s',
+          result,
+        );
+      }
+    }
+
+    // flush effects until none remain, and cleanup
+    try {
+      if (
+        actingUpdatesScopeDepth === 1 &&
+        (isSchedulerMocked === false || previousIsSomeRendererActing === false)
+      ) {
+        // we're about to exit the act() scope,
+        // now's the time to flush effects
+        flushWork();
+      }
+      onDone();
+    } catch (err) {
+      onDone();
+      throw err;
+    }
+
+    // in the sync case, the returned thenable only warns *if* await-ed
+    return {
+      then(resolve: () => void) {
+        if (__DEV__) {
+          console.error(
+            'Do not await the result of calling act(...) with sync logic, it is not a Promise.',
+          );
+        }
+        resolve();
+      },
+    };
+  }
 }

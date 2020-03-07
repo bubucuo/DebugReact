@@ -12,7 +12,7 @@ import type {
   ReactDOMResponderContext,
 } from 'shared/ReactDOMTypes';
 
-import React from 'react';
+import * as React from 'react';
 import {DiscreteEvent} from 'shared/ReactTypes';
 import type {ReactEventResponderListener} from 'shared/ReactTypes';
 
@@ -23,6 +23,7 @@ type InputResponderProps = {
   onBeforeChange: (e: InputEvent) => void,
   onChange: (e: InputEvent) => void,
   onValueChange: (value: string | boolean) => void,
+  ...
 };
 
 type InputEvent = {|
@@ -211,13 +212,14 @@ const inputResponderImpl = {
   },
 };
 
-export const InputResponder = React.unstable_createResponder(
+// $FlowFixMe Can't add generic types without causing a parsing/syntax errors
+export const InputResponder = React.DEPRECATED_createResponder(
   'Input',
   inputResponderImpl,
 );
 
 export function useInput(
   props: InputResponderProps,
-): ReactEventResponderListener<any, any> {
-  return React.unstable_useResponder(InputResponder, props);
+): ?ReactEventResponderListener<any, any> {
+  return React.DEPRECATED_useResponder(InputResponder, props);
 }

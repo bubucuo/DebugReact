@@ -14,7 +14,7 @@ import type {
 } from 'shared/ReactDOMTypes';
 import type {ReactEventResponderListener} from 'shared/ReactTypes';
 
-import React from 'react';
+import * as React from 'react';
 import {
   buttonsEnum,
   dispatchDiscreteEvent,
@@ -103,6 +103,7 @@ const rootEventTypes = hasPointerEvents
       'pointermove',
       'pointercancel',
       'scroll',
+      'blur',
     ]
   : [
       'click_active',
@@ -114,6 +115,7 @@ const rootEventTypes = hasPointerEvents
       'touchmove',
       'touchcancel',
       'scroll',
+      'blur',
     ];
 
 /**
@@ -520,10 +522,14 @@ const responderImpl = {
           }
 
           const activate = shouldActivate(event);
-          const activateAuxiliary = isAuxiliary(nativeEvent.buttons, event);
+          const buttons =
+            nativeEvent.button === 1
+              ? buttonsEnum.auxiliary
+              : nativeEvent.buttons;
+          const activateAuxiliary = isAuxiliary(buttons, event);
 
           if (activate || activateAuxiliary) {
-            state.buttons = nativeEvent.buttons;
+            state.buttons = buttons;
             state.pointerType = event.pointerType;
             state.responderTarget = context.getResponderNode();
             addRootEventTypes(rootEventTypes, context, state);
@@ -693,6 +699,13 @@ const responderImpl = {
         removeRootEventTypes(context, state);
         break;
       }
+      case 'blur': {
+        // If we encounter a blur that happens on the pressed target
+        // then disengage the blur.
+        if (state.isActive && nativeEvent.target === state.responderTarget) {
+          dispatchCancel(context, props, state);
+        }
+      }
     }
   },
   onUnmount(
@@ -708,11 +721,14 @@ const responderImpl = {
   },
 };
 
-export const TapResponder = React.unstable_createResponder(
+// $FlowFixMe Can't add generic types without causing a parsing/syntax errors
+export const TapResponder = React.DEPRECATED_createResponder(
   'Tap',
   responderImpl,
 );
 
-export function useTap(props: TapProps): ReactEventResponderListener<any, any> {
-  return React.unstable_useResponder(TapResponder, props);
+export function useTap(
+  props: TapProps,
+): ?ReactEventResponderListener<any, any> {
+  return React.DEPRECATED_useResponder(TapResponder, props);
 }

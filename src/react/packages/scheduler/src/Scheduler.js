@@ -10,8 +10,8 @@
 
 import {
   enableSchedulerDebugging,
-  enableProfiling
-} from "./SchedulerFeatureFlags";
+  enableProfiling,
+} from './SchedulerFeatureFlags';
 import {
   requestHostCallback,
   requestHostTimeout,
@@ -19,9 +19,9 @@ import {
   shouldYieldToHost,
   getCurrentTime,
   forceFrameRate,
-  requestPaint
-} from "./SchedulerHostConfig";
-import { push, pop, peek } from "./SchedulerMinHeap";
+  requestPaint,
+} from './SchedulerHostConfig';
+import {push, pop, peek} from './SchedulerMinHeap';
 
 // TODO: Use symbols?
 import {
@@ -29,8 +29,8 @@ import {
   UserBlockingPriority,
   NormalPriority,
   LowPriority,
-  IdlePriority
-} from "./SchedulerPriorities";
+  IdlePriority,
+} from './SchedulerPriorities';
 import {
   sharedProfilingBuffer,
   markTaskRun,
@@ -42,8 +42,8 @@ import {
   markSchedulerUnsuspended,
   markTaskStart,
   stopLoggingProfilingEvents,
-  startLoggingProfilingEvents
-} from "./SchedulerProfiling";
+  startLoggingProfilingEvents,
+} from './SchedulerProfiling';
 
 // Max 31 bit integer. The max integer size in V8 for 32-bit systems.
 // Math.pow(2, 30) - 1
@@ -184,7 +184,7 @@ function workLoop(hasTimeRemaining, initialTime) {
       markTaskRun(currentTask, currentTime);
       const continuationCallback = callback(didUserCallbackTimeout);
       currentTime = getCurrentTime();
-      if (typeof continuationCallback === "function") {
+      if (typeof continuationCallback === 'function') {
         currentTask.callback = continuationCallback;
         markTaskYield(currentTask, currentTime);
       } else {
@@ -297,15 +297,15 @@ function unstable_scheduleCallback(priorityLevel, callback, options) {
 
   var startTime;
   var timeout;
-  if (typeof options === "object" && options !== null) {
+  if (typeof options === 'object' && options !== null) {
     var delay = options.delay;
-    if (typeof delay === "number" && delay > 0) {
+    if (typeof delay === 'number' && delay > 0) {
       startTime = currentTime + delay;
     } else {
       startTime = currentTime;
     }
     timeout =
-      typeof options.timeout === "number"
+      typeof options.timeout === 'number'
         ? options.timeout
         : timeoutForPriorityLevel(priorityLevel);
   } else {
@@ -321,7 +321,7 @@ function unstable_scheduleCallback(priorityLevel, callback, options) {
     priorityLevel,
     startTime,
     expirationTime,
-    sortIndex: -1
+    sortIndex: -1,
   };
   if (enableProfiling) {
     newTask.isQueued = false;
@@ -430,13 +430,13 @@ export {
   unstable_pauseExecution,
   unstable_getFirstCallbackNode,
   getCurrentTime as unstable_now,
-  forceFrameRate as unstable_forceFrameRate
+  forceFrameRate as unstable_forceFrameRate,
 };
 
 export const unstable_Profiling = enableProfiling
   ? {
       startLoggingProfilingEvents,
       stopLoggingProfilingEvents,
-      sharedProfilingBuffer
+      sharedProfilingBuffer,
     }
   : null;

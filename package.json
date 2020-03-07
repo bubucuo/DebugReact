@@ -136,6 +136,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-export-default-from": "^7.8.3",
     "@babel/plugin-transform-flow-strip-types": "^7.4.4"
   }
 }

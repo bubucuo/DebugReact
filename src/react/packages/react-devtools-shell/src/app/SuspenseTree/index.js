@@ -7,7 +7,8 @@
  * @flow
  */
 
-import React, {Fragment, Suspense, SuspenseList, useState} from 'react';
+import * as React from 'react';
+import {Fragment, Suspense, SuspenseList, useState} from 'react';
 
 function SuspenseTree() {
   return (
@@ -127,7 +128,7 @@ function SuspenseListTest() {
 }
 
 function LoadLater() {
-  const [loadChild, setLoadChild] = useState(0);
+  const [loadChild, setLoadChild] = useState(false);
   return (
     <Suspense
       fallback={

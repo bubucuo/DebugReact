@@ -40,6 +40,35 @@ describe('ReactDOMRoot', () => {
     expect(container.textContent).toEqual('Hi');
   });
 
+  it('warns if a callback parameter is provided to render', () => {
+    const callback = jest.fn();
+    const root = ReactDOM.createRoot(container);
+    expect(() =>
+      root.render(<div>Hi</div>, callback),
+    ).toErrorDev(
+      'render(...): does not support the second callback argument. ' +
+        'To execute a side effect after rendering, declare it in a component body with useEffect().',
+      {withoutStack: true},
+    );
+    Scheduler.unstable_flushAll();
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('warns if a callback parameter is provided to unmount', () => {
+    const callback = jest.fn();
+    const root = ReactDOM.createRoot(container);
+    root.render(<div>Hi</div>);
+    expect(() =>
+      root.unmount(callback),
+    ).toErrorDev(
+      'unmount(...): does not support a callback argument. ' +
+        'To execute a side effect after rendering, declare it in a component body with useEffect().',
+      {withoutStack: true},
+    );
+    Scheduler.unstable_flushAll();
+    expect(callback).not.toHaveBeenCalled();
+  });
+
   it('unmounts children', () => {
     const root = ReactDOM.createRoot(container);
     root.render(<div>Hi</div>);
@@ -81,9 +110,7 @@ describe('ReactDOMRoot', () => {
         <span />
       </div>,
     );
-    expect(() => Scheduler.unstable_flushAll()).toWarnDev('Extra attributes', {
-      withoutStack: true,
-    });
+    expect(() => Scheduler.unstable_flushAll()).toErrorDev('Extra attributes');
   });
 
   it('does not clear existing children', async () => {
@@ -120,7 +147,7 @@ describe('ReactDOMRoot', () => {
     expect(container.textContent).toEqual('Hi');
     expect(() => {
       ReactDOM.render(<div>Bye</div>, container);
-    }).toWarnDev(
+    }).toErrorDev(
       [
         // We care about this warning:
         'You are calling ReactDOM.render() on a container that was previously ' +
@@ -143,7 +170,7 @@ describe('ReactDOMRoot', () => {
     expect(container.textContent).toEqual('Hi');
     expect(() => {
       ReactDOM.hydrate(<div>Hi</div>, container);
-    }).toWarnDev(
+    }).toErrorDev(
       [
         // We care about this warning:
         'You are calling ReactDOM.hydrate() on a container that was previously ' +
@@ -164,7 +191,7 @@ describe('ReactDOMRoot', () => {
     let unmounted = false;
     expect(() => {
       unmounted = ReactDOM.unmountComponentAtNode(container);
-    }).toWarnDev(
+    }).toErrorDev(
       [
         // We care about this warning:
         'You are calling ReactDOM.unmountComponentAtNode() on a container that was previously ' +
@@ -193,7 +220,7 @@ describe('ReactDOMRoot', () => {
     let unmounted = false;
     expect(() => {
       unmounted = ReactDOM.unmountComponentAtNode(container);
-    }).toWarnDev('Did you mean to call root.unmount()?', {withoutStack: true});
+    }).toErrorDev('Did you mean to call root.unmount()?', {withoutStack: true});
     expect(unmounted).toBe(false);
     Scheduler.unstable_flushAll();
     expect(container.textContent).toEqual('Hi');
@@ -206,7 +233,7 @@ describe('ReactDOMRoot', () => {
     ReactDOM.render(<div>Hi</div>, container);
     expect(() => {
       ReactDOM.createRoot(container);
-    }).toWarnDev(
+    }).toErrorDev(
       'You are calling ReactDOM.createRoot() on a container that was previously ' +
         'passed to ReactDOM.render(). This is not supported.',
       {withoutStack: true},
@@ -217,7 +244,7 @@ describe('ReactDOMRoot', () => {
     ReactDOM.createRoot(container);
     expect(() => {
       ReactDOM.createRoot(container);
-    }).toWarnDev(
+    }).toErrorDev(
       'You are calling ReactDOM.createRoot() on a container that ' +
         'has already been passed to createRoot() before. Instead, call ' +
         'root.render() on the existing root instead if you want to update it.',
@@ -230,5 +257,35 @@ describe('ReactDOMRoot', () => {
     root.unmount();
     Scheduler.unstable_flushAll();
     ReactDOM.createRoot(container); // No warning
+  });
+
+  it('warns if creating a root on the document.body', async () => {
+    expect(() => {
+      ReactDOM.createRoot(document.body);
+    }).toErrorDev(
+      'createRoot(): Creating roots directly with document.body is ' +
+        'discouraged, since its children are often manipulated by third-party ' +
+        'scripts and browser extensions. This may lead to subtle ' +
+        'reconciliation issues. Try using a container element created ' +
+        'for your app.',
+      {withoutStack: true},
+    );
+  });
+
+  it('warns if updating a root that has had its contents removed', async () => {
+    const root = ReactDOM.createRoot(container);
+    root.render(<div>Hi</div>);
+    Scheduler.unstable_flushAll();
+    container.innerHTML = '';
+
+    expect(() => {
+      root.render(<div>Hi</div>);
+    }).toErrorDev(
+      'render(...): It looks like the React-rendered content of the ' +
+        'root container was removed without using React. This is not ' +
+        'supported and will cause errors. Instead, call ' +
+        "root.unmount() to empty a root's container.",
+      {withoutStack: true},
+    );
   });
 });

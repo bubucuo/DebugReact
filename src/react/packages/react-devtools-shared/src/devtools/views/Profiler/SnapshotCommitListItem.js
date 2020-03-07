@@ -7,7 +7,8 @@
  * @flow
  */
 
-import React, {memo, useCallback} from 'react';
+import * as React from 'react';
+import {memo, useCallback} from 'react';
 import {areEqual} from 'react-window';
 import {getGradientColor, formatDuration, formatTime} from './utils';
 
@@ -19,6 +20,7 @@ type Props = {
   data: ItemData,
   index: number,
   style: Object,
+  ...
 };
 
 function SnapshotCommitListItem({data: itemData, index, style}: Props) {

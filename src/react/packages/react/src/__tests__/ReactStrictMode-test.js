@@ -36,7 +36,7 @@ describe('ReactStrictMode', () => {
         </React.StrictMode>,
         container,
       );
-    }).toWarnDev(
+    }).toErrorDev(
       'Invalid ARIA attribute `ariaTypo`. ' +
         'ARIA attributes follow the pattern aria-* and must be lowercase.\n' +
         '    in div (at **)\n' +
@@ -56,7 +56,7 @@ describe('ReactStrictMode', () => {
           <Foo />
         </React.StrictMode>,
       );
-    }).toWarnDev(
+    }).toErrorDev(
       'Invalid ARIA attribute `ariaTypo`. ' +
         'ARIA attributes follow the pattern aria-* and must be lowercase.\n' +
         '    in div (at **)\n' +
@@ -138,6 +138,7 @@ describe('ReactStrictMode', () => {
         'getDerivedStateFromProps',
         'getDerivedStateFromProps',
         'shouldComponentUpdate',
+        'shouldComponentUpdate',
         'render',
         'render',
         'componentDidUpdate',
@@ -165,6 +166,7 @@ describe('ReactStrictMode', () => {
       expect(log).toEqual([
         'getDerivedStateFromProps',
         'getDerivedStateFromProps',
+        'shouldComponentUpdate',
         'shouldComponentUpdate',
       ]);
     } else {
@@ -283,6 +285,7 @@ describe('ReactStrictMode', () => {
         'getDerivedStateFromProps',
         'getDerivedStateFromProps',
         'shouldComponentUpdate',
+        'shouldComponentUpdate',
         'render',
         'render',
         'componentDidUpdate',
@@ -304,6 +307,7 @@ describe('ReactStrictMode', () => {
       expect(log).toEqual([
         'getDerivedStateFromProps',
         'getDerivedStateFromProps',
+        'shouldComponentUpdate',
         'shouldComponentUpdate',
       ]);
     } else {
@@ -399,7 +403,7 @@ describe('Concurrent Mode', () => {
       const container = document.createElement('div');
       const root = ReactDOM.createRoot(container);
       root.render(<AsyncRoot />);
-      expect(() => Scheduler.unstable_flushAll()).toWarnDev(
+      expect(() => Scheduler.unstable_flushAll()).toErrorDev(
         [
           /* eslint-disable max-len */
           `Warning: Using UNSAFE_componentWillMount in strict mode is not recommended and may indicate bugs in your code. See https://fb.me/react-unsafe-component-lifecycles for details.
@@ -457,7 +461,7 @@ Please update the following components: AsyncRoot`,
     root.render(<AsyncRoot />);
 
     expect(() => {
-      expect(() => Scheduler.unstable_flushAll()).toWarnDev(
+      expect(() => Scheduler.unstable_flushAll()).toErrorDev(
         [
           /* eslint-disable max-len */
           `Warning: Using UNSAFE_componentWillMount in strict mode is not recommended and may indicate bugs in your code. See https://fb.me/react-unsafe-component-lifecycles for details.
@@ -480,7 +484,7 @@ Please update the following components: AsyncRoot`,
         ],
         {withoutStack: true},
       );
-    }).toLowPriorityWarnDev(
+    }).toWarnDev(
       [
         /* eslint-disable max-len */
         `Warning: componentWillMount has been renamed, and is not recommended for use. See https://fb.me/react-unsafe-component-lifecycles for details.
@@ -535,13 +539,17 @@ Please update the following components: Parent`,
       const container = document.createElement('div');
       const root = ReactDOM.createRoot(container);
       root.render(<AsyncRoot foo={true} />);
-      expect(() => Scheduler.unstable_flushAll()).toWarnDev(
+      expect(() =>
+        Scheduler.unstable_flushAll(),
+      ).toErrorDev(
         'Using UNSAFE_componentWillMount in strict mode is not recommended',
         {withoutStack: true},
       );
 
       root.render(<AsyncRoot foo={false} />);
-      expect(() => Scheduler.unstable_flushAll()).toWarnDev(
+      expect(() =>
+        Scheduler.unstable_flushAll(),
+      ).toErrorDev(
         'Using UNSAFE_componentWillMount in strict mode is not recommended',
         {withoutStack: true},
       );
@@ -592,7 +600,9 @@ Please update the following components: Parent`,
 
     const container = document.createElement('div');
 
-    expect(() => ReactDOM.render(<SyncRoot />, container)).toWarnDev(
+    expect(() =>
+      ReactDOM.render(<SyncRoot />, container),
+    ).toErrorDev(
       'Using UNSAFE_componentWillReceiveProps in strict mode is not recommended',
       {withoutStack: true},
     );
@@ -743,7 +753,7 @@ describe('string refs', () => {
     const container = document.createElement('div');
     expect(() => {
       ReactDOM.render(<OuterComponent />, container);
-    }).toWarnDev(
+    }).toErrorDev(
       'Warning: A string ref, "somestring", has been found within a strict mode tree. ' +
         'String refs are a source of potential bugs and should be avoided. ' +
         'We recommend using useRef() or createRef() instead. ' +
@@ -785,7 +795,7 @@ describe('string refs', () => {
     const container = document.createElement('div');
     expect(() => {
       ReactDOM.render(<OuterComponent />, container);
-    }).toWarnDev(
+    }).toErrorDev(
       'Warning: A string ref, "somestring", has been found within a strict mode tree. ' +
         'String refs are a source of potential bugs and should be avoided. ' +
         'We recommend using useRef() or createRef() instead. ' +
@@ -864,7 +874,7 @@ describe('context legacy', () => {
     const container = document.createElement('div');
     expect(() => {
       ReactDOM.render(<Root />, container);
-    }).toWarnDev(
+    }).toErrorDev(
       'Warning: Legacy context API has been detected within a strict-mode tree.' +
         '\n\nThe old API will be supported in all 16.x releases, but applications ' +
         'using it should migrate to the new version.' +
@@ -872,6 +882,7 @@ describe('context legacy', () => {
         'FunctionalLegacyContextConsumer, LegacyContextConsumer, LegacyContextProvider' +
         '\n\nLearn more about this warning here: ' +
         'https://fb.me/react-legacy-context' +
+        '\n    in LegacyContextProvider (at **)' +
         '\n    in StrictMode (at **)' +
         '\n    in div (at **)' +
         '\n    in Root (at **)',

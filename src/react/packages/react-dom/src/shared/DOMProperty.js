@@ -7,7 +7,7 @@
  * @flow
  */
 
-import warning from 'shared/warning';
+import {enableDeprecatedFlareAPI} from 'shared/ReactFeatureFlags';
 
 type PropertyType = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -84,7 +84,7 @@ export function isAttributeNameSafe(attributeName: string): boolean {
   }
   illegalAttributeNameCache[attributeName] = true;
   if (__DEV__) {
-    warning(false, 'Invalid attribute name: `%s`', attributeName);
+    console.error('Invalid attribute name: `%s`', attributeName);
   }
   return false;
 }
@@ -207,7 +207,7 @@ function PropertyInfoRecord(
 const properties = {};
 
 // These props are reserved by React. They shouldn't be written to the DOM.
-[
+const reservedProps = [
   'children',
   'dangerouslySetInnerHTML',
   // TODO: This prevents the assignment of defaultValue to regular
@@ -219,7 +219,12 @@ const properties = {};
   'suppressContentEditableWarning',
   'suppressHydrationWarning',
   'style',
-].forEach(name => {
+];
+if (enableDeprecatedFlareAPI) {
+  reservedProps.push('DEPRECATED_flareListeners');
+}
+
+reservedProps.forEach(name => {
   properties[name] = new PropertyInfoRecord(
     name,
     RESERVED,
@@ -404,7 +409,7 @@ const capitalize = token => token[1].toUpperCase();
 // or boolean value assignment. Regular attributes that just accept strings
 // and have the same names are omitted, just like in the HTML whitelist.
 // Some of these attributes can be hard to find. This list was created by
-// scrapping the MDN documentation.
+// scraping the MDN documentation.
 [
   'accent-height',
   'alignment-baseline',

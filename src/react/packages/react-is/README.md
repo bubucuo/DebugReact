@@ -1,9 +1,8 @@
 # `react-is`
 
 This package allows you to test arbitrary values and see if they're a particular React element type.
-这个 package 可以帮助你判断 React 元素类型。
 
-## Installation 安装
+## Installation
 
 ```sh
 # Yarn
@@ -13,24 +12,24 @@ yarn add react-is
 npm install react-is
 ```
 
-## Usage 用途
+## Usage
 
-### Determining if a Component is Valid 判断 Component 组件的有效性
+### Determining if a Component is Valid
 
 ```js
 import React from "react";
 import * as ReactIs from "react-is";
 
 class ClassComponent extends React.Component {
-    render() {
-        return React.createElement("div");
-    }
+  render() {
+    return React.createElement("div");
+  }
 }
 
 const FunctionComponent = () => React.createElement("div");
 
 const ForwardRefComponent = React.forwardRef((props, ref) =>
-    React.createElement(Component, { forwardedRef: ref, ...props })
+  React.createElement(Component, { forwardedRef: ref, ...props })
 );
 
 const Context = React.createContext(false);
@@ -44,13 +43,13 @@ ReactIs.isValidElementType(Context.Consumer); // true
 ReactIs.isValidElementType(React.createFactory("div")); // true
 ```
 
-### Determining an Element's Type 判断元素类型
+### Determining an Element's Type
 
 #### Context
 
 ```js
 import React from "react";
-import * as ReactIs from "react-is";
+import * as ReactIs from 'react-is';
 
 const ThemeContext = React.createContext("blue");
 
@@ -64,7 +63,7 @@ ReactIs.typeOf(<ThemeContext.Consumer />) === ReactIs.ContextConsumer; // true
 
 ```js
 import React from "react";
-import * as ReactIs from "react-is";
+import * as ReactIs from 'react-is';
 
 ReactIs.isElement(<div />); // true
 ReactIs.typeOf(<div />) === ReactIs.Element; // true
@@ -74,7 +73,7 @@ ReactIs.typeOf(<div />) === ReactIs.Element; // true
 
 ```js
 import React from "react";
-import * as ReactIs from "react-is";
+import * as ReactIs from 'react-is';
 
 ReactIs.isFragment(<></>); // true
 ReactIs.typeOf(<></>) === ReactIs.Fragment; // true
@@ -85,7 +84,7 @@ ReactIs.typeOf(<></>) === ReactIs.Fragment; // true
 ```js
 import React from "react";
 import ReactDOM from "react-dom";
-import * as ReactIs from "react-is";
+import * as ReactIs from 'react-is';
 
 const div = document.createElement("div");
 const portal = ReactDOM.createPortal(<div />, div);
@@ -98,7 +97,7 @@ ReactIs.typeOf(portal) === ReactIs.Portal; // true
 
 ```js
 import React from "react";
-import * as ReactIs from "react-is";
+import * as ReactIs from 'react-is';
 
 ReactIs.isStrictMode(<React.StrictMode />); // true
 ReactIs.typeOf(<React.StrictMode />) === ReactIs.StrictMode; // true

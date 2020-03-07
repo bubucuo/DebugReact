@@ -8,7 +8,8 @@
  */
 
 import {copy} from 'clipboard-js';
-import React, {useCallback, useContext, useState} from 'react';
+import * as React from 'react';
+import {useCallback, useContext, useRef, useState} from 'react';
 import {BridgeContext, StoreContext} from '../context';
 import Button from '../Button';
 import ButtonIcon from '../ButtonIcon';
@@ -18,6 +19,7 @@ import {InspectedElementContext} from './InspectedElementContext';
 import KeyValue from './KeyValue';
 import {serializeHooksForCopy} from '../utils';
 import styles from './HooksTree.css';
+import useContextMenu from '../../ContextMenu/useContextMenu';
 import {meta} from '../../../hydration';
 
 import type {InspectPath} from './SelectedElement';
@@ -113,6 +115,22 @@ function HookView({canEditHooks, hook, id, inspectPath, path}: HookViewProps) {
     [],
   );
 
+  const contextMenuTriggerRef = useRef(null);
+
+  useContextMenu({
+    data: {
+      path: ['hooks', ...path],
+      type:
+        hook !== null &&
+        typeof hook === 'object' &&
+        hook.hasOwnProperty(meta.type)
+          ? hook[meta.type]
+          : typeof value,
+    },
+    id: 'SelectedElement',
+    ref: contextMenuTriggerRef,
+  });
+
   if (hook.hasOwnProperty(meta.inspected)) {
     // This Hook is too deep and hasn't been hydrated.
     if (__DEV__) {
@@ -169,6 +187,7 @@ function HookView({canEditHooks, hook, id, inspectPath, path}: HookViewProps) {
         inspectPath={inspectPath}
         name="subHooks"
         path={path.concat(['subHooks'])}
+        pathRoot="hooks"
         value={subHooks}
       />
     );
@@ -176,7 +195,7 @@ function HookView({canEditHooks, hook, id, inspectPath, path}: HookViewProps) {
     if (isComplexDisplayValue) {
       return (
         <div className={styles.Hook}>
-          <div className={styles.NameValueRow}>
+          <div ref={contextMenuTriggerRef} className={styles.NameValueRow}>
             <ExpandCollapseToggle isOpen={isOpen} setIsOpen={setIsOpen} />
             <span
               onClick={toggleIsOpen}
@@ -191,6 +210,7 @@ function HookView({canEditHooks, hook, id, inspectPath, path}: HookViewProps) {
               inspectPath={inspectPath}
               name="DebugValue"
               path={path.concat(['value'])}
+              pathRoot="hooks"
               value={value}
             />
             {subHooksView}
@@ -200,7 +220,7 @@ function HookView({canEditHooks, hook, id, inspectPath, path}: HookViewProps) {
     } else {
       return (
         <div className={styles.Hook}>
-          <div className={styles.NameValueRow}>
+          <div ref={contextMenuTriggerRef} className={styles.NameValueRow}>
             <ExpandCollapseToggle isOpen={isOpen} setIsOpen={setIsOpen} />
             <span
               onClick={toggleIsOpen}
@@ -208,7 +228,9 @@ function HookView({canEditHooks, hook, id, inspectPath, path}: HookViewProps) {
               {name || 'Anonymous'}
             </span>{' '}
             {/* $FlowFixMe */}
-            <span className={styles.Value}>{displayValue}</span>
+            <span className={styles.Value} onClick={toggleIsOpen}>
+              {displayValue}
+            </span>
           </div>
           <div className={styles.Children} hidden={!isOpen}>
             {subHooksView}
@@ -219,7 +241,7 @@ function HookView({canEditHooks, hook, id, inspectPath, path}: HookViewProps) {
   } else {
     let overrideValueFn = null;
     // TODO Maybe read editable value from debug hook?
-    if (canEditHooks && isStateEditable) {
+    if (canEditHooks && isStateEditable && hookID !== null) {
       overrideValueFn = (
         absolutePath: Array<string | number>,
         newValue: any,
@@ -251,6 +273,7 @@ function HookView({canEditHooks, hook, id, inspectPath, path}: HookViewProps) {
             name={name}
             overrideValueFn={overrideValueFn}
             path={path.concat(['value'])}
+            pathRoot="hooks"
             value={value}
           />
         </div>
@@ -258,7 +281,7 @@ function HookView({canEditHooks, hook, id, inspectPath, path}: HookViewProps) {
     } else {
       return (
         <div className={styles.Hook}>
-          <div className={styles.NameValueRow}>
+          <div ref={contextMenuTriggerRef} className={styles.NameValueRow}>
             <span className={styles.ExpandCollapseToggleSpacer} />
             <span
               className={

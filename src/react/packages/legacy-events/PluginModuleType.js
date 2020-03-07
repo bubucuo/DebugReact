@@ -15,7 +15,7 @@ import type {
 import type {TopLevelType} from './TopLevelEventTypes';
 import type {EventSystemFlags} from 'legacy-events/EventSystemFlags';
 
-export type EventTypes = {[key: string]: DispatchConfig};
+export type EventTypes = {[key: string]: DispatchConfig, ...};
 
 export type AnyNativeEvent = Event | KeyboardEvent | MouseEvent | Touch;
 
@@ -29,6 +29,7 @@ export type PluginModule<NativeEvent> = {
     nativeTarget: NativeEvent,
     nativeEventTarget: null | EventTarget,
     eventSystemFlags: EventSystemFlags,
+    container?: Document | Element,
   ) => ?ReactSyntheticEvent,
   tapMoveThreshold?: number,
 };

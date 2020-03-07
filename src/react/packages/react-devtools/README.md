@@ -41,7 +41,7 @@ If you're using React Native 0.43 or higher, it should connect to your simulator
 
 ### Integration with React Native Inspector
 
-You can open the [in-app developer menu](https://facebook.github.io/react-native/docs/debugging.html#accessing-the-in-app-developer-menu) and choose "Show Inspector". It will bring up an overlay that lets you tap on any UI element and see information about it:
+You can open the [in-app developer menu](https://reactnative.dev/docs/debugging.html#accessing-the-in-app-developer-menu) and choose "Show Inspector". It will bring up an overlay that lets you tap on any UI element and see information about it:
 
 ![React Native Inspector](http://i.imgur.com/ReFhREb.gif)
 
@@ -56,7 +56,7 @@ You can choose "Hide Inspector" in the same menu to exit this mode.
 
 When debugging JavaScript in Chrome, you can inspect the props and state of the React components in the browser console.
 
-First, follow the [instructions for debugging in Chrome](https://facebook.github.io/react-native/docs/debugging.html#chrome-developer-tools) to open the Chrome console.
+First, follow the [instructions for debugging in Chrome](https://reactnative.dev/docs/debugging.html#chrome-developer-tools) to open the Chrome console.
 
 Make sure that the dropdown in the top left corner of the Chrome console says `debuggerWorker.js`. **This step is essential.**
 
@@ -109,7 +109,26 @@ Or you could develop with a local HTTP server [like `serve`](https://www.npmjs.c
 
 **If you still have issues** please [report them](https://github.com/facebook/react/issues/new?labels=Component:%20Developer%20Tools). Don't forget to specify your OS, browser version, extension version, and the exact instructions to reproduce the issue with a screenshot.
 
-## Development
+## Local development
+The standalone DevTools app can be built and tested from source following the instructions below.
+
+### Prerequisite steps
+DevTools depends on local versions of several NPM packages<sup>1</sup> also in this workspace. You'll need to either build or download those packages first.
+
+<sup>1</sup> Note that at this time, an _experimental_ build is required because DevTools depends on the `createRoot` API.
+
+#### Build from source
+To build dependencies from source, run the following command from the root of the repository:
+```sh
+yarn build-for-devtools
+```
+#### Download from CI
+To use the latest build from CI, run the following command from the root of the repository:
+```sh
+./scripts/release/download-experimental-build.js
+```
+### Build steps
+Once the above packages have been built or downloaded, you can test the standalone DevTools by running the following:
 
 * Run `yarn start:backend` and `yarn start:standalone` in `../react-devtools-core`
 * Run `yarn start` in this folder

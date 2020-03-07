@@ -11,8 +11,9 @@
 
 let React;
 let ReactDOM;
-let ReactFeatureFlags;
 let ReactTestUtils;
+
+let ReactFeatureFlags = require('shared/ReactFeatureFlags');
 
 // NOTE: We're explicitly not using JSX here. This is intended to test
 // a new React.jsx api which does not have a JSX transformer yet.
@@ -30,7 +31,7 @@ describe('ReactElement.jsx', () => {
     global.Symbol = undefined;
 
     ReactFeatureFlags = require('shared/ReactFeatureFlags');
-    ReactFeatureFlags.enableJSXTransformAPI = true;
+    ReactFeatureFlags.warnAboutSpreadingKeyToJSX = true;
 
     React = require('react');
     ReactDOM = require('react-dom');
@@ -40,6 +41,11 @@ describe('ReactElement.jsx', () => {
   afterEach(() => {
     global.Symbol = originalSymbol;
   });
+
+  if (!__EXPERIMENTAL__) {
+    it("empty test so Jest doesn't complain", () => {});
+    return;
+  }
 
   it('allows static methods to be called using the type property', () => {
     class StaticMethodComponentClass extends React.Component {
@@ -67,7 +73,18 @@ describe('ReactElement.jsx', () => {
     expect(React.isValidElement(true)).toEqual(false);
     expect(React.isValidElement({})).toEqual(false);
     expect(React.isValidElement('string')).toEqual(false);
-    expect(React.isValidElement(React.createFactory('div'))).toEqual(false);
+    if (!__EXPERIMENTAL__) {
+      let factory;
+      expect(() => {
+        factory = React.createFactory('div');
+      }).toWarnDev(
+        'Warning: React.createFactory() is deprecated and will be removed in a ' +
+          'future major release. Consider using JSX or use React.createElement() ' +
+          'directly instead.',
+        {withoutStack: true},
+      );
+      expect(React.isValidElement(factory)).toEqual(false);
+    }
     expect(React.isValidElement(Component)).toEqual(false);
     expect(React.isValidElement({type: 'div', props: {}})).toEqual(false);
 
@@ -206,12 +223,11 @@ describe('ReactElement.jsx', () => {
         });
       }
     }
-    expect(() => ReactDOM.render(React.jsx(Parent, {}), container)).toWarnDev(
+    expect(() => ReactDOM.render(React.jsx(Parent, {}), container)).toErrorDev(
       'Child: `key` is not a prop. Trying to access it will result ' +
         'in `undefined` being returned. If you need to access the same ' +
         'value within the child component, you should pass it as a different ' +
         'prop. (https://fb.me/react-special-props)',
-      {withoutStack: true},
     );
   });
 
@@ -219,7 +235,7 @@ describe('ReactElement.jsx', () => {
     const container = document.createElement('div');
     expect(() =>
       ReactDOM.render(React.jsxs('div', {children: 'foo'}, null), container),
-    ).toWarnDev(
+    ).toErrorDev(
       'React.jsx: Static children should always be an array. ' +
         'You are likely explicitly calling React.jsxs or React.jsxDEV. ' +
         'Use the Babel transform instead.',
@@ -229,7 +245,9 @@ describe('ReactElement.jsx', () => {
 
   it('should warn when `key` is being accessed on a host element', () => {
     const element = React.jsxs('div', {}, '3');
-    expect(() => void element.props.key).toWarnDev(
+    expect(
+      () => void element.props.key,
+    ).toErrorDev(
       'div: `key` is not a prop. Trying to access it will result ' +
         'in `undefined` being returned. If you need to access the same ' +
         'value within the child component, you should pass it as a different ' +
@@ -252,12 +270,11 @@ describe('ReactElement.jsx', () => {
         });
       }
     }
-    expect(() => ReactDOM.render(React.jsx(Parent, {}), container)).toWarnDev(
+    expect(() => ReactDOM.render(React.jsx(Parent, {}), container)).toErrorDev(
       'Child: `ref` is not a prop. Trying to access it will result ' +
         'in `undefined` being returned. If you need to access the same ' +
         'value within the child component, you should pass it as a different ' +
         'prop. (https://fb.me/react-special-props)',
-      {withoutStack: true},
     );
   });
 
@@ -279,9 +296,6 @@ describe('ReactElement.jsx', () => {
 
     jest.resetModules();
 
-    ReactFeatureFlags = require('shared/ReactFeatureFlags');
-    ReactFeatureFlags.enableJSXTransformAPI = true;
-
     React = require('react');
 
     class Component extends React.Component {
@@ -297,7 +311,18 @@ describe('ReactElement.jsx', () => {
     expect(React.isValidElement(true)).toEqual(false);
     expect(React.isValidElement({})).toEqual(false);
     expect(React.isValidElement('string')).toEqual(false);
-    expect(React.isValidElement(React.createFactory('div'))).toEqual(false);
+    if (!__EXPERIMENTAL__) {
+      let factory;
+      expect(() => {
+        factory = React.createFactory('div');
+      }).toWarnDev(
+        'Warning: React.createFactory() is deprecated and will be removed in a ' +
+          'future major release. Consider using JSX or use React.createElement() ' +
+          'directly instead.',
+        {withoutStack: true},
+      );
+      expect(React.isValidElement(factory)).toEqual(false);
+    }
     expect(React.isValidElement(Component)).toEqual(false);
     expect(React.isValidElement({type: 'div', props: {}})).toEqual(false);
 
@@ -323,7 +348,7 @@ describe('ReactElement.jsx', () => {
         });
       }
     }
-    expect(() => ReactDOM.render(React.jsx(Parent, {}), container)).toWarnDev(
+    expect(() => ReactDOM.render(React.jsx(Parent, {}), container)).toErrorDev(
       'Warning: Each child in a list should have a unique "key" prop.\n\n' +
         'Check the render method of `Parent`. See https://fb.me/react-warning-keys for more information.\n' +
         '    in Child (created by Parent)\n' +
@@ -345,10 +370,10 @@ describe('ReactElement.jsx', () => {
         });
       }
     }
-    expect(() => ReactDOM.render(React.jsx(Parent, {}), container)).toWarnDev(
+    expect(() => ReactDOM.render(React.jsx(Parent, {}), container)).toErrorDev(
       'Warning: React.jsx: Spreading a key to JSX is a deprecated pattern. ' +
         'Explicitly pass a key after spreading props in your JSX call. ' +
-        'E.g. <ComponentName {...props} key={key} />',
+        'E.g. <Child {...props} key={key} />',
     );
   });
 

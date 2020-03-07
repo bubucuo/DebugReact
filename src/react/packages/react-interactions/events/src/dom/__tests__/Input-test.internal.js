@@ -33,7 +33,7 @@ const setUntrackedTextareaValue = Object.getOwnPropertyDescriptor(
 
 const modulesInit = () => {
   ReactFeatureFlags = require('shared/ReactFeatureFlags');
-  ReactFeatureFlags.enableFlareAPI = true;
+  ReactFeatureFlags.enableDeprecatedFlareAPI = true;
   ReactFeatureFlags.debugRenderPhaseSideEffectsForStrictMode = false;
   React = require('react');
   ReactDOM = require('react-dom');
@@ -44,6 +44,11 @@ const modulesInit = () => {
 
 describe('Input event responder', () => {
   let container;
+
+  if (!__EXPERIMENTAL__) {
+    it("empty test so Jest doesn't complain", () => {});
+    return;
+  }
 
   beforeEach(() => {
     jest.resetModules();
@@ -72,7 +77,7 @@ describe('Input event responder', () => {
           onChange,
           onValueChange,
         });
-        return <input ref={ref} listeners={listener} />;
+        return <input ref={ref} DEPRECATED_flareListeners={listener} />;
       }
       ReactDOM.render(<Component />, container);
     });
@@ -123,7 +128,7 @@ describe('Input event responder', () => {
             type="text"
             ref={ref}
             defaultValue="foo"
-            listeners={listener}
+            DEPRECATED_flareListeners={listener}
           />
         );
       }
@@ -163,7 +168,7 @@ describe('Input event responder', () => {
             type="checkbox"
             ref={ref}
             defaultChecked={true}
-            listeners={listener}
+            DEPRECATED_flareListeners={listener}
           />
         );
       }
@@ -206,7 +211,7 @@ describe('Input event responder', () => {
             type="checkbox"
             ref={ref}
             defaultChecked={false}
-            listeners={listener}
+            DEPRECATED_flareListeners={listener}
           />
         );
       }
@@ -243,7 +248,13 @@ describe('Input event responder', () => {
           onChange,
           onValueChange,
         });
-        return <input type="checkbox" ref={ref} listeners={listener} />;
+        return (
+          <input
+            type="checkbox"
+            ref={ref}
+            DEPRECATED_flareListeners={listener}
+          />
+        );
       }
       ReactDOM.render(<Component />, container);
 
@@ -289,7 +300,7 @@ describe('Input event responder', () => {
             type="text"
             defaultValue="foo"
             ref={ref}
-            listeners={listener}
+            DEPRECATED_flareListeners={listener}
           />
         );
       }
@@ -347,7 +358,12 @@ describe('Input event responder', () => {
           onValueChange,
         });
         return (
-          <input type="text" defaultValue="42" ref={ref} listeners={listener} />
+          <input
+            type="text"
+            defaultValue="42"
+            ref={ref}
+            DEPRECATED_flareListeners={listener}
+          />
         );
       }
       ReactDOM.render(<Component />, container);
@@ -391,7 +407,7 @@ describe('Input event responder', () => {
             type="checkbox"
             defaultChecked={false}
             ref={ref}
-            listeners={listener}
+            DEPRECATED_flareListeners={listener}
           />
         );
       }
@@ -413,9 +429,7 @@ describe('Input event responder', () => {
 
       // However, simulating a normal click should fire a React event because the
       // real value (false) would have changed from the last tracked value (true).
-      ref.current.dispatchEvent(
-        new Event('click', {bubbles: true, cancelable: true}),
-      );
+      ref.current.click();
       expect(onChangeCalled).toBe(1);
       expect(onValueChangeCalled).toBe(1);
     });
@@ -439,7 +453,9 @@ describe('Input event responder', () => {
           onChange,
           onValueChange,
         });
-        return <input type="radio" ref={ref} listeners={listener} />;
+        return (
+          <input type="radio" ref={ref} DEPRECATED_flareListeners={listener} />
+        );
       }
       ReactDOM.render(<Component />, container);
 
@@ -484,7 +500,13 @@ describe('Input event responder', () => {
           onChange: onChange1,
           onValueChange: onValueChange1,
         });
-        return <input type="radio" name="group" listeners={listener} />;
+        return (
+          <input
+            type="radio"
+            name="group"
+            DEPRECATED_flareListeners={listener}
+          />
+        );
       }
 
       function Radio2() {
@@ -492,7 +514,13 @@ describe('Input event responder', () => {
           onChange: onChange2,
           onValueChange: onValueChange2,
         });
-        return <input type="radio" name="group" listeners={listener} />;
+        return (
+          <input
+            type="radio"
+            name="group"
+            DEPRECATED_flareListeners={listener}
+          />
+        );
       }
 
       function Component() {
@@ -509,18 +537,14 @@ describe('Input event responder', () => {
       const option2 = ref.current.childNodes[1];
 
       // Select first option.
-      option1.dispatchEvent(
-        new Event('click', {bubbles: true, cancelable: true}),
-      );
+      option1.click();
       expect(onChangeCalled1).toBe(1);
       expect(onValueChangeCalled1).toBe(1);
       expect(onChangeCalled2).toBe(0);
       expect(onValueChangeCalled2).toBe(0);
 
       // Select second option.
-      option2.dispatchEvent(
-        new Event('click', {bubbles: true, cancelable: true}),
-      );
+      option2.click();
       expect(onChangeCalled1).toBe(1);
       expect(onValueChangeCalled1).toBe(1);
       expect(onChangeCalled2).toBe(1);
@@ -528,9 +552,7 @@ describe('Input event responder', () => {
 
       // Select the first option.
       // It should receive the React change event again.
-      option1.dispatchEvent(
-        new Event('click', {bubbles: true, cancelable: true}),
-      );
+      option1.click();
       expect(onChangeCalled1).toBe(2);
       expect(onValueChangeCalled1).toBe(2);
       expect(onChangeCalled2).toBe(1);
@@ -560,7 +582,12 @@ describe('Input event responder', () => {
             onValueChange,
           });
           return (
-            <input type={type} name="group" ref={ref} listeners={listener} />
+            <input
+              type={type}
+              name="group"
+              ref={ref}
+              DEPRECATED_flareListeners={listener}
+            />
           );
         }
         ReactDOM.render(<Component />, container);
@@ -587,7 +614,9 @@ describe('Input event responder', () => {
             onChange,
             onValueChange,
           });
-          return <input type={type} ref={ref} listeners={listener} />;
+          return (
+            <input type={type} ref={ref} DEPRECATED_flareListeners={listener} />
+          );
         }
         ReactDOM.render(<Component2 />, container);
         // Should be ignored (no change):
@@ -613,7 +642,9 @@ describe('Input event responder', () => {
             onChange,
             onValueChange,
           });
-          return <input type={type} ref={ref} listeners={listener} />;
+          return (
+            <input type={type} ref={ref} DEPRECATED_flareListeners={listener} />
+          );
         }
         ReactDOM.render(<Component3 />, container);
         // Should be ignored (no change):
@@ -653,7 +684,9 @@ describe('Input event responder', () => {
           onChange,
           onValueChange,
         });
-        return <input type="range" ref={ref} listeners={listener} />;
+        return (
+          <input type="range" ref={ref} DEPRECATED_flareListeners={listener} />
+        );
       }
       ReactDOM.render(<Component />, container);
 
@@ -690,7 +723,9 @@ describe('Input event responder', () => {
           onChange,
           onValueChange,
         });
-        return <input type="range" ref={ref} listeners={listener} />;
+        return (
+          <input type="range" ref={ref} DEPRECATED_flareListeners={listener} />
+        );
       }
       ReactDOM.render(<Component />, container);
 
@@ -766,7 +801,7 @@ describe('Input event responder', () => {
               type="text"
               ref={innerRef}
               value={controlledValue}
-              listeners={listener}
+              DEPRECATED_flareListeners={listener}
             />
           );
         }
@@ -826,7 +861,7 @@ describe('Input event responder', () => {
               type="checkbox"
               ref={innerRef}
               checked={controlledValue}
-              listeners={listener}
+              DEPRECATED_flareListeners={listener}
             />
           );
         }
@@ -901,7 +936,7 @@ describe('Input event responder', () => {
               type="text"
               ref={innerRef}
               value={controlledValue}
-              listeners={listener}
+              DEPRECATED_flareListeners={listener}
             />
           );
         }

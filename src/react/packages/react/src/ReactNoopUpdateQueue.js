@@ -5,8 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import warningWithoutStack from "shared/warningWithoutStack";
-
 const didWarnStateUpdateForUnmountedComponent = {};
 
 function warnNoop(publicInstance, callerName) {
@@ -14,19 +12,18 @@ function warnNoop(publicInstance, callerName) {
     const constructor = publicInstance.constructor;
     const componentName =
       (constructor && (constructor.displayName || constructor.name)) ||
-      "ReactClass";
+      'ReactClass';
     const warningKey = `${componentName}.${callerName}`;
     if (didWarnStateUpdateForUnmountedComponent[warningKey]) {
       return;
     }
-    warningWithoutStack(
-      false,
+    console.error(
       "Can't call %s on a component that is not yet mounted. " +
-        "This is a no-op, but it might indicate a bug in your application. " +
-        "Instead, assign to `this.state` directly or define a `state = {};` " +
-        "class property with the desired state in the %s component.",
+        'This is a no-op, but it might indicate a bug in your application. ' +
+        'Instead, assign to `this.state` directly or define a `state = {};` ' +
+        'class property with the desired state in the %s component.',
       callerName,
-      componentName
+      componentName,
     );
     didWarnStateUpdateForUnmountedComponent[warningKey] = true;
   }
@@ -63,7 +60,7 @@ const ReactNoopUpdateQueue = {
    * @internal
    */
   enqueueForceUpdate: function(publicInstance, callback, callerName) {
-    warnNoop(publicInstance, "forceUpdate");
+    warnNoop(publicInstance, 'forceUpdate');
   },
 
   /**
@@ -83,9 +80,9 @@ const ReactNoopUpdateQueue = {
     publicInstance,
     completeState,
     callback,
-    callerName
+    callerName,
   ) {
-    warnNoop(publicInstance, "replaceState");
+    warnNoop(publicInstance, 'replaceState');
   },
 
   /**
@@ -93,7 +90,6 @@ const ReactNoopUpdateQueue = {
    * internal. This provides a merging strategy that is not available to deep
    * properties which is confusing. TODO: Expose pendingState or don't use it
    * during the merge.
-   * 给state设置一个子集(subset)，这只存在于_pendingState是内部值的情况下。
    *
    * @param {ReactClass} publicInstance The instance that should rerender.
    * @param {object} partialState Next partial state to be merged with state.
@@ -105,10 +101,10 @@ const ReactNoopUpdateQueue = {
     publicInstance,
     partialState,
     callback,
-    callerName
+    callerName,
   ) {
-    warnNoop(publicInstance, "setState");
-  }
+    warnNoop(publicInstance, 'setState');
+  },
 };
 
 export default ReactNoopUpdateQueue;

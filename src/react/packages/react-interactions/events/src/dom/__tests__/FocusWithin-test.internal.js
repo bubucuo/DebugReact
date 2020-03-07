@@ -9,24 +9,26 @@
 
 'use strict';
 
-import {createEventTarget, setPointerEvent} from '../testing-library';
+import {createEventTarget, setPointerEvent} from 'dom-event-testing-library';
 
 let React;
 let ReactFeatureFlags;
 let ReactDOM;
 let FocusWithinResponder;
 let useFocusWithin;
+let Scheduler;
 
 const initializeModules = hasPointerEvents => {
   setPointerEvent(hasPointerEvents);
   jest.resetModules();
   ReactFeatureFlags = require('shared/ReactFeatureFlags');
-  ReactFeatureFlags.enableFlareAPI = true;
+  ReactFeatureFlags.enableDeprecatedFlareAPI = true;
   React = require('react');
   ReactDOM = require('react-dom');
   FocusWithinResponder = require('react-interactions/events/focus')
     .FocusWithinResponder;
   useFocusWithin = require('react-interactions/events/focus').useFocusWithin;
+  Scheduler = require('scheduler');
 };
 
 const forcePointerEvents = true;
@@ -34,6 +36,11 @@ const table = [[forcePointerEvents], [!forcePointerEvents]];
 
 describe.each(table)('FocusWithin responder', hasPointerEvents => {
   let container;
+
+  if (!__EXPERIMENTAL__) {
+    it("empty test so Jest doesn't complain", () => {});
+    return;
+  }
 
   beforeEach(() => {
     initializeModules();
@@ -60,7 +67,7 @@ describe.each(table)('FocusWithin responder', hasPointerEvents => {
           onFocusWithinChange,
           onFocusWithinVisibleChange,
         });
-        return <div ref={ref} listeners={listener} />;
+        return <div ref={ref} DEPRECATED_flareListeners={listener} />;
       };
       ReactDOM.render(<Component />, container);
     });
@@ -82,7 +89,7 @@ describe.each(table)('FocusWithin responder', hasPointerEvents => {
         onFocusWithinChange,
       });
       return (
-        <div ref={ref} listeners={listener}>
+        <div ref={ref} DEPRECATED_flareListeners={listener}>
           {show && <input ref={innerRef} />}
           <div ref={innerRef2} />
         </div>
@@ -151,7 +158,7 @@ describe.each(table)('FocusWithin responder', hasPointerEvents => {
         onFocusWithinVisibleChange,
       });
       return (
-        <div ref={ref} listeners={listener}>
+        <div ref={ref} DEPRECATED_flareListeners={listener}>
           {show && <input ref={innerRef} />}
           <div ref={innerRef2} />
         </div>
@@ -280,7 +287,7 @@ describe.each(table)('FocusWithin responder', hasPointerEvents => {
           onBlurWithin,
         });
         return (
-          <div ref={ref} listeners={listener}>
+          <div ref={ref} DEPRECATED_flareListeners={listener}>
             {show && <input ref={innerRef} />}
             <div ref={innerRef2} />
           </div>
@@ -310,7 +317,7 @@ describe.each(table)('FocusWithin responder', hasPointerEvents => {
           onBlurWithin,
         });
         return (
-          <div ref={ref} listeners={listener}>
+          <div ref={ref} DEPRECATED_flareListeners={listener}>
             {show && (
               <div>
                 <input ref={innerRef} />
@@ -336,6 +343,68 @@ describe.each(table)('FocusWithin responder', hasPointerEvents => {
         expect.objectContaining({isTargetAttached: false}),
       );
     });
+
+    it.experimental(
+      'is called after a focused suspended element is hidden',
+      () => {
+        const Suspense = React.Suspense;
+        let suspend = false;
+        let resolve;
+        let promise = new Promise(resolvePromise => (resolve = resolvePromise));
+
+        function Child() {
+          if (suspend) {
+            throw promise;
+          } else {
+            return <input ref={innerRef} />;
+          }
+        }
+
+        const Component = ({show}) => {
+          const listener = useFocusWithin({
+            onBeforeBlurWithin,
+            onBlurWithin,
+          });
+
+          return (
+            <div DEPRECATED_flareListeners={listener}>
+              <Suspense fallback="Loading...">
+                <Child />
+              </Suspense>
+            </div>
+          );
+        };
+
+        const container2 = document.createElement('div');
+        document.body.appendChild(container2);
+
+        let root = ReactDOM.createRoot(container2);
+        root.render(<Component />);
+        Scheduler.unstable_flushAll();
+        jest.runAllTimers();
+        expect(container2.innerHTML).toBe('<div><input></div>');
+
+        const inner = innerRef.current;
+        const target = createEventTarget(inner);
+        target.keydown({key: 'Tab'});
+        target.focus();
+        expect(onBeforeBlurWithin).toHaveBeenCalledTimes(0);
+        expect(onBlurWithin).toHaveBeenCalledTimes(0);
+
+        suspend = true;
+        root.render(<Component />);
+        Scheduler.unstable_flushAll();
+        jest.runAllTimers();
+        expect(container2.innerHTML).toBe(
+          '<div><input style="display: none;">Loading...</div>',
+        );
+        expect(onBeforeBlurWithin).toHaveBeenCalledTimes(1);
+        expect(onBlurWithin).toHaveBeenCalledTimes(1);
+        resolve();
+
+        document.body.removeChild(container2);
+      },
+    );
   });
 
   it('expect displayName to show up for event component', () => {

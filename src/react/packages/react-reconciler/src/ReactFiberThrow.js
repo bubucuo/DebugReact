@@ -16,7 +16,6 @@ import type {Thenable} from './ReactFiberWorkLoop';
 import type {SuspenseContext} from './ReactFiberSuspenseContext';
 
 import getComponentName from 'shared/getComponentName';
-import warningWithoutStack from 'shared/warningWithoutStack';
 import {
   ClassComponent,
   HostRoot,
@@ -55,7 +54,6 @@ import {
   markLegacyErrorBoundaryAsFailed,
   isAlreadyFailedLegacyErrorBoundary,
   pingSuspendedRoot,
-  checkForWrongSuspensePriorityInDEV,
 } from './ReactFiberWorkLoop';
 
 import {Sync} from './ReactFiberExpirationTime';
@@ -124,12 +122,13 @@ function createClassErrorUpdate(
           // If componentDidCatch is the only error boundary method defined,
           // then it needs to call setState to recover from errors.
           // If no state update is scheduled then the boundary will swallow the error.
-          warningWithoutStack(
-            fiber.expirationTime === Sync,
-            '%s: Error boundaries should implement getDerivedStateFromError(). ' +
-              'In that method, return a state update to display an error message or fallback UI.',
-            getComponentName(fiber.type) || 'Unknown',
-          );
+          if (fiber.expirationTime !== Sync) {
+            console.error(
+              '%s: Error boundaries should implement getDerivedStateFromError(). ' +
+                'In that method, return a state update to display an error message or fallback UI.',
+              getComponentName(fiber.type) || 'Unknown',
+            );
+          }
         }
       }
     };
@@ -195,7 +194,17 @@ function throwException(
     // This is a thenable.
     const thenable: Thenable = (value: any);
 
-    checkForWrongSuspensePriorityInDEV(sourceFiber);
+    if ((sourceFiber.mode & BlockingMode) === NoMode) {
+      // Reset the memoizedState to what it was before we attempted
+      // to render it.
+      let currentSource = sourceFiber.alternate;
+      if (currentSource) {
+        sourceFiber.memoizedState = currentSource.memoizedState;
+        sourceFiber.expirationTime = currentSource.expirationTime;
+      } else {
+        sourceFiber.memoizedState = null;
+      }
+    }
 
     let hasInvisibleParentBoundary = hasSuspenseContext(
       suspenseStackCursor.current,

@@ -25,6 +25,7 @@ import {
   SimpleMemoComponent,
   ContextProvider,
   ForwardRef,
+  Block,
 } from 'shared/ReactWorkTags';
 
 type CurrentDispatcherRef = typeof ReactSharedInternals.ReactCurrentDispatcher;
@@ -35,6 +36,7 @@ type HookLogEntry = {
   primitive: string,
   stackError: Error,
   value: mixed,
+  ...
 };
 
 let hookLog: Array<HookLogEntry> = [];
@@ -115,8 +117,9 @@ function useState<S>(
     hook !== null
       ? hook.memoizedState
       : typeof initialState === 'function'
-        ? initialState()
-        : initialState;
+      ? // $FlowFixMe: Flow doesn't like mixed types
+        initialState()
+      : initialState;
   hookLog.push({primitive: 'State', stackError: new Error(), value: state});
   return [state, (action: BasicStateAction<S>) => {}];
 }
@@ -141,7 +144,7 @@ function useReducer<S, I, A>(
   return [state, (action: A) => {}];
 }
 
-function useRef<T>(initialValue: T): {current: T} {
+function useRef<T>(initialValue: T): {|current: T|} {
   let hook = nextHook();
   let ref = hook !== null ? hook.memoizedState : {current: initialValue};
   hookLog.push({
@@ -173,7 +176,7 @@ function useEffect(
 }
 
 function useImperativeHandle<T>(
-  ref: {current: T | null} | ((inst: T | null) => mixed) | null | void,
+  ref: {|current: T | null|} | ((inst: T | null) => mixed) | null | void,
   create: () => T,
   inputs: Array<mixed> | void | null,
 ): void {
@@ -240,7 +243,11 @@ function useResponder(
 function useTransition(
   config: SuspenseConfig | null | void,
 ): [(() => void) => void, boolean] {
-  nextHook();
+  // useTransition() composes multiple hooks internally.
+  // Advance the current hook index the same number of times
+  // so that subsequent hooks have the right memoized state.
+  nextHook(); // State
+  nextHook(); // Callback
   hookLog.push({
     primitive: 'Transition',
     stackError: new Error(),
@@ -250,7 +257,11 @@ function useTransition(
 }
 
 function useDeferredValue<T>(value: T, config: TimeoutConfig | null | void): T {
-  nextHook();
+  // useDeferredValue() composes multiple hooks internally.
+  // Advance the current hook index the same number of times
+  // so that subsequent hooks have the right memoized state.
+  nextHook(); // State
+  nextHook(); // Effect
   hookLog.push({
     primitive: 'DeferredValue',
     stackError: new Error(),
@@ -284,6 +295,7 @@ export type HooksNode = {
   name: string,
   value: mixed,
   subHooks: Array<HooksNode>,
+  ...
 };
 export type HooksTree = Array<HooksNode>;
 
@@ -623,7 +635,8 @@ export function inspectHooksOfFiber(
   if (
     fiber.tag !== FunctionComponent &&
     fiber.tag !== SimpleMemoComponent &&
-    fiber.tag !== ForwardRef
+    fiber.tag !== ForwardRef &&
+    fiber.tag !== Block
   ) {
     throw new Error(
       'Unknown Fiber. Needs to be a function component to inspect hooks.',

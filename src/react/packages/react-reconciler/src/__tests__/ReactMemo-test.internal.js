@@ -56,7 +56,7 @@ describe('memo', () => {
       return <App ref={() => {}} />;
     }
     ReactNoop.render(<Outer />);
-    expect(() => expect(Scheduler).toFlushWithoutYielding()).toWarnDev([
+    expect(() => expect(Scheduler).toFlushWithoutYielding()).toErrorDev([
       'Warning: Function components cannot be given refs. Attempts to access ' +
         'this ref will fail.',
     ]);
@@ -74,7 +74,7 @@ describe('memo', () => {
       return <App ref={() => {}} />;
     }
     ReactNoop.render(<Outer />);
-    expect(() => expect(Scheduler).toFlushWithoutYielding()).toWarnDev([
+    expect(() => expect(Scheduler).toFlushWithoutYielding()).toErrorDev([
       'Warning: Function components cannot be given refs. Attempts to access ' +
         'this ref will fail.',
     ]);
@@ -311,7 +311,9 @@ describe('memo', () => {
       });
 
       it('warns if the first argument is undefined', () => {
-        expect(() => memo()).toWarnDev(
+        expect(() =>
+          memo(),
+        ).toErrorDev(
           'memo: The first argument must be a component. Instead ' +
             'received: undefined',
           {withoutStack: true},
@@ -319,7 +321,9 @@ describe('memo', () => {
       });
 
       it('warns if the first argument is null', () => {
-        expect(() => memo(null)).toWarnDev(
+        expect(() =>
+          memo(null),
+        ).toErrorDev(
           'memo: The first argument must be a component. Instead ' +
             'received: null',
           {withoutStack: true},
@@ -337,7 +341,7 @@ describe('memo', () => {
         expect(() => {
           ReactNoop.render(<Fn inner="2" />);
           expect(Scheduler).toFlushWithoutYielding();
-        }).toWarnDev(
+        }).toErrorDev(
           'Invalid prop `inner` of type `string` supplied to `FnInner`, expected `number`.',
         );
 
@@ -345,7 +349,7 @@ describe('memo', () => {
         expect(() => {
           ReactNoop.render(<Fn inner={false} />);
           expect(Scheduler).toFlushWithoutYielding();
-        }).toWarnDev(
+        }).toErrorDev(
           'Invalid prop `inner` of type `boolean` supplied to `FnInner`, expected `number`.',
         );
       });
@@ -361,7 +365,7 @@ describe('memo', () => {
         expect(() => {
           ReactNoop.render(<Fn outer="3" />);
           expect(Scheduler).toFlushWithoutYielding();
-        }).toWarnDev(
+        }).toErrorDev(
           // Outer props are checked in createElement
           'Invalid prop `outer` of type `string` supplied to `FnInner`, expected `number`.',
         );
@@ -370,7 +374,7 @@ describe('memo', () => {
         expect(() => {
           ReactNoop.render(<Fn outer={false} />);
           expect(Scheduler).toFlushWithoutYielding();
-        }).toWarnDev(
+        }).toErrorDev(
           // Outer props are checked in createElement
           'Invalid prop `outer` of type `boolean` supplied to `FnInner`, expected `number`.',
         );
@@ -397,7 +401,7 @@ describe('memo', () => {
         expect(() => {
           ReactNoop.render(<Outer inner="2" middle="3" outer="4" />);
           expect(Scheduler).toFlushWithoutYielding();
-        }).toWarnDev([
+        }).toErrorDev([
           'Invalid prop `outer` of type `string` supplied to `Inner`, expected `number`.',
           'Invalid prop `middle` of type `string` supplied to `Inner`, expected `number`.',
           'Invalid prop `inner` of type `string` supplied to `Inner`, expected `number`.',
@@ -409,11 +413,80 @@ describe('memo', () => {
             <Outer inner={false} middle={false} outer={false} />,
           );
           expect(Scheduler).toFlushWithoutYielding();
-        }).toWarnDev([
+        }).toErrorDev([
           'Invalid prop `outer` of type `boolean` supplied to `Inner`, expected `number`.',
           'Invalid prop `middle` of type `boolean` supplied to `Inner`, expected `number`.',
           'Invalid prop `inner` of type `boolean` supplied to `Inner`, expected `number`.',
         ]);
+      });
+
+      it('does not drop lower priority state updates when bailing out at higher pri (simple)', async () => {
+        const {useState} = React;
+
+        let setCounter;
+        const Counter = memo(() => {
+          const [counter, _setCounter] = useState(0);
+          setCounter = _setCounter;
+          return counter;
+        });
+
+        function App() {
+          return (
+            <Suspense fallback="Loading...">
+              <Counter />
+            </Suspense>
+          );
+        }
+
+        const root = ReactNoop.createRoot();
+        await ReactNoop.act(async () => {
+          root.render(<App />);
+        });
+        expect(root).toMatchRenderedOutput('0');
+
+        await ReactNoop.act(async () => {
+          setCounter(1);
+          ReactNoop.discreteUpdates(() => {
+            root.render(<App />);
+          });
+        });
+        expect(root).toMatchRenderedOutput('1');
+      });
+
+      it('does not drop lower priority state updates when bailing out at higher pri (complex)', async () => {
+        const {useState} = React;
+
+        let setCounter;
+        const Counter = memo(
+          () => {
+            const [counter, _setCounter] = useState(0);
+            setCounter = _setCounter;
+            return counter;
+          },
+          (a, b) => a.complexProp.val === b.complexProp.val,
+        );
+
+        function App() {
+          return (
+            <Suspense fallback="Loading...">
+              <Counter complexProp={{val: 1}} />
+            </Suspense>
+          );
+        }
+
+        const root = ReactNoop.createRoot();
+        await ReactNoop.act(async () => {
+          root.render(<App />);
+        });
+        expect(root).toMatchRenderedOutput('0');
+
+        await ReactNoop.act(async () => {
+          setCounter(1);
+          ReactNoop.discreteUpdates(() => {
+            root.render(<App />);
+          });
+        });
+        expect(root).toMatchRenderedOutput('1');
       });
     });
   }

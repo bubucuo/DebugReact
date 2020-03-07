@@ -26,13 +26,16 @@ import type {ReactPriorityLevel} from './SchedulerWithReactIntegration';
 
 import {unstable_wrap as Schedule_tracing_wrap} from 'scheduler/tracing';
 import {
+  deferPassiveEffectCleanupDuringUnmount,
   enableSchedulerTracing,
   enableProfilerTimer,
+  enableProfilerCommitHooks,
   enableSuspenseServerRenderer,
-  enableFlareAPI,
+  enableDeprecatedFlareAPI,
   enableFundamentalAPI,
   enableSuspenseCallback,
   enableScopeAPI,
+  runAllPassiveEffectDestroysBeforeCreates,
 } from 'shared/ReactFeatureFlags';
 import {
   FunctionComponent,
@@ -51,6 +54,7 @@ import {
   SuspenseListComponent,
   FundamentalComponent,
   ScopeComponent,
+  Block,
 } from 'shared/ReactWorkTags';
 import {
   invokeGuardedCallback,
@@ -67,15 +71,20 @@ import {
 } from 'shared/ReactSideEffectTags';
 import getComponentName from 'shared/getComponentName';
 import invariant from 'shared/invariant';
-import warningWithoutStack from 'shared/warningWithoutStack';
-import warning from 'shared/warning';
 
 import {onCommitUnmount} from './ReactFiberDevToolsHook';
 import {startPhaseTimer, stopPhaseTimer} from './ReactDebugFiberPerf';
 import {getStackByFiberInDevAndProd} from './ReactCurrentFiber';
 import {logCapturedError} from './ReactFiberErrorLogger';
 import {resolveDefaultProps} from './ReactFiberLazyComponent';
-import {getCommitTime} from './ReactProfilerTimer';
+import {
+  getCommitTime,
+  recordLayoutEffectDuration,
+  recordPassiveEffectDuration,
+  startLayoutEffectTimer,
+  startPassiveEffectTimer,
+} from './ReactProfilerTimer';
+import {ProfileMode} from './ReactTypeOfMode';
 import {commitUpdateQueue} from './ReactUpdateQueue';
 import {
   getPublicInstance,
@@ -100,7 +109,6 @@ import {
   hideTextInstance,
   unhideInstance,
   unhideTextInstance,
-  unmountResponderInstance,
   unmountFundamentalComponent,
   updateFundamentalComponent,
   commitHydratedContainer,
@@ -111,20 +119,22 @@ import {
   captureCommitPhaseError,
   resolveRetryThenable,
   markCommitTimeOfFallback,
+  enqueuePendingPassiveHookEffectMount,
+  enqueuePendingPassiveHookEffectUnmount,
+  enqueuePendingPassiveProfilerEffect,
 } from './ReactFiberWorkLoop';
 import {
   NoEffect as NoHookEffect,
-  UnmountSnapshot,
-  UnmountMutation,
-  MountMutation,
-  UnmountLayout,
-  MountLayout,
-  UnmountPassive,
-  MountPassive,
+  HasEffect as HookHasEffect,
+  Layout as HookLayout,
+  Passive as HookPassive,
 } from './ReactHookEffectTags';
 import {didWarnAboutReassigningProps} from './ReactFiberBeginWork';
 import {runWithPriority, NormalPriority} from './SchedulerWithReactIntegration';
-import {updateEventListeners} from './ReactFiberEvents';
+import {
+  updateDeprecatedEventListeners,
+  unmountDeprecatedResponderListeners,
+} from './ReactFiberDeprecatedEvents';
 
 let didWarnAboutUndefinedSnapshotBeforeUpdate: Set<mixed> | null = null;
 if (__DEV__) {
@@ -174,7 +184,20 @@ const callComponentWillUnmountWithTimer = function(current, instance) {
   startPhaseTimer(current, 'componentWillUnmount');
   instance.props = current.memoizedProps;
   instance.state = current.memoizedState;
-  instance.componentWillUnmount();
+  if (
+    enableProfilerTimer &&
+    enableProfilerCommitHooks &&
+    current.mode & ProfileMode
+  ) {
+    try {
+      startLayoutEffectTimer();
+      instance.componentWillUnmount();
+    } finally {
+      recordLayoutEffectDuration(current);
+    }
+  } else {
+    instance.componentWillUnmount();
+  }
   stopPhaseTimer();
 };
 
@@ -247,8 +270,8 @@ function commitBeforeMutationLifeCycles(
   switch (finishedWork.tag) {
     case FunctionComponent:
     case ForwardRef:
-    case SimpleMemoComponent: {
-      commitHookEffectList(UnmountSnapshot, NoHookEffect, finishedWork);
+    case SimpleMemoComponent:
+    case Block: {
       return;
     }
     case ClassComponent: {
@@ -266,24 +289,26 @@ function commitBeforeMutationLifeCycles(
               finishedWork.type === finishedWork.elementType &&
               !didWarnAboutReassigningProps
             ) {
-              warning(
-                instance.props === finishedWork.memoizedProps,
-                'Expected %s props to match memoized props before ' +
-                  'getSnapshotBeforeUpdate. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.props`. ' +
-                  'Please file an issue.',
-                getComponentName(finishedWork.type) || 'instance',
-              );
-              warning(
-                instance.state === finishedWork.memoizedState,
-                'Expected %s state to match memoized state before ' +
-                  'getSnapshotBeforeUpdate. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.props`. ' +
-                  'Please file an issue.',
-                getComponentName(finishedWork.type) || 'instance',
-              );
+              if (instance.props !== finishedWork.memoizedProps) {
+                console.error(
+                  'Expected %s props to match memoized props before ' +
+                    'getSnapshotBeforeUpdate. ' +
+                    'This might either be because of a bug in React, or because ' +
+                    'a component reassigns its own `this.props`. ' +
+                    'Please file an issue.',
+                  getComponentName(finishedWork.type) || 'instance',
+                );
+              }
+              if (instance.state !== finishedWork.memoizedState) {
+                console.error(
+                  'Expected %s state to match memoized state before ' +
+                    'getSnapshotBeforeUpdate. ' +
+                    'This might either be because of a bug in React, or because ' +
+                    'a component reassigns its own `this.state`. ' +
+                    'Please file an issue.',
+                  getComponentName(finishedWork.type) || 'instance',
+                );
+              }
             }
           }
           const snapshot = instance.getSnapshotBeforeUpdate(
@@ -293,13 +318,10 @@ function commitBeforeMutationLifeCycles(
             prevState,
           );
           if (__DEV__) {
-            const didWarnSet = ((didWarnAboutUndefinedSnapshotBeforeUpdate: any): Set<
-              mixed,
-            >);
+            const didWarnSet = ((didWarnAboutUndefinedSnapshotBeforeUpdate: any): Set<mixed>);
             if (snapshot === undefined && !didWarnSet.has(finishedWork.type)) {
               didWarnSet.add(finishedWork.type);
-              warningWithoutStack(
-                false,
+              console.error(
                 '%s.getSnapshotBeforeUpdate(): A snapshot value (or null) ' +
                   'must be returned. You have returned undefined.',
                 getComponentName(finishedWork.type),
@@ -319,28 +341,22 @@ function commitBeforeMutationLifeCycles(
     case IncompleteClassComponent:
       // Nothing to do for these component types
       return;
-    default: {
-      invariant(
-        false,
-        'This unit of work tag should not have side-effects. This error is ' +
-          'likely caused by a bug in React. Please file an issue.',
-      );
-    }
   }
+  invariant(
+    false,
+    'This unit of work tag should not have side-effects. This error is ' +
+      'likely caused by a bug in React. Please file an issue.',
+  );
 }
 
-function commitHookEffectList(
-  unmountTag: number,
-  mountTag: number,
-  finishedWork: Fiber,
-) {
+function commitHookEffectListUnmount(tag: number, finishedWork: Fiber) {
   const updateQueue: FunctionComponentUpdateQueue | null = (finishedWork.updateQueue: any);
   let lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
   if (lastEffect !== null) {
     const firstEffect = lastEffect.next;
     let effect = firstEffect;
     do {
-      if ((effect.tag & unmountTag) !== NoHookEffect) {
+      if ((effect.tag & tag) === tag) {
         // Unmount
         const destroy = effect.destroy;
         effect.destroy = undefined;
@@ -348,7 +364,19 @@ function commitHookEffectList(
           destroy();
         }
       }
-      if ((effect.tag & mountTag) !== NoHookEffect) {
+      effect = effect.next;
+    } while (effect !== firstEffect);
+  }
+}
+
+function commitHookEffectListMount(tag: number, finishedWork: Fiber) {
+  const updateQueue: FunctionComponentUpdateQueue | null = (finishedWork.updateQueue: any);
+  let lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
+  if (lastEffect !== null) {
+    const firstEffect = lastEffect.next;
+    let effect = firstEffect;
+    do {
+      if ((effect.tag & tag) === tag) {
         // Mount
         const create = effect.create;
         effect.destroy = create();
@@ -378,8 +406,7 @@ function commitHookEffectList(
             } else {
               addendum = ' You returned: ' + destroy;
             }
-            warningWithoutStack(
-              false,
+            console.error(
               'An effect function must not return anything besides a function, ' +
                 'which is used for clean-up.%s%s',
               addendum,
@@ -393,18 +420,122 @@ function commitHookEffectList(
   }
 }
 
+function schedulePassiveEffects(finishedWork: Fiber) {
+  if (runAllPassiveEffectDestroysBeforeCreates) {
+    const updateQueue: FunctionComponentUpdateQueue | null = (finishedWork.updateQueue: any);
+    let lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
+    if (lastEffect !== null) {
+      const firstEffect = lastEffect.next;
+      let effect = firstEffect;
+      do {
+        const {next, tag} = effect;
+        if (
+          (tag & HookPassive) !== NoHookEffect &&
+          (tag & HookHasEffect) !== NoHookEffect
+        ) {
+          enqueuePendingPassiveHookEffectUnmount(finishedWork, effect);
+          enqueuePendingPassiveHookEffectMount(finishedWork, effect);
+        }
+        effect = next;
+      } while (effect !== firstEffect);
+    }
+  }
+}
+
 export function commitPassiveHookEffects(finishedWork: Fiber): void {
   if ((finishedWork.effectTag & Passive) !== NoEffect) {
     switch (finishedWork.tag) {
       case FunctionComponent:
       case ForwardRef:
-      case SimpleMemoComponent: {
-        commitHookEffectList(UnmountPassive, NoHookEffect, finishedWork);
-        commitHookEffectList(NoHookEffect, MountPassive, finishedWork);
+      case SimpleMemoComponent:
+      case Block: {
+        // TODO (#17945) We should call all passive destroy functions (for all fibers)
+        // before calling any create functions. The current approach only serializes
+        // these for a single fiber.
+        if (
+          enableProfilerTimer &&
+          enableProfilerCommitHooks &&
+          finishedWork.mode & ProfileMode
+        ) {
+          try {
+            startPassiveEffectTimer();
+            commitHookEffectListUnmount(
+              HookPassive | HookHasEffect,
+              finishedWork,
+            );
+            commitHookEffectListMount(
+              HookPassive | HookHasEffect,
+              finishedWork,
+            );
+          } finally {
+            recordPassiveEffectDuration(finishedWork);
+          }
+        } else {
+          commitHookEffectListUnmount(
+            HookPassive | HookHasEffect,
+            finishedWork,
+          );
+          commitHookEffectListMount(HookPassive | HookHasEffect, finishedWork);
+        }
         break;
       }
       default:
         break;
+    }
+  }
+}
+
+export function commitPassiveEffectDurations(
+  finishedRoot: FiberRoot,
+  finishedWork: Fiber,
+): void {
+  if (enableProfilerTimer && enableProfilerCommitHooks) {
+    // Only Profilers with work in their subtree will have an Update effect scheduled.
+    if ((finishedWork.effectTag & Update) !== NoEffect) {
+      switch (finishedWork.tag) {
+        case Profiler: {
+          const {passiveEffectDuration} = finishedWork.stateNode;
+          const {id, onPostCommit} = finishedWork.memoizedProps;
+
+          // This value will still reflect the previous commit phase.
+          // It does not get reset until the start of the next commit phase.
+          const commitTime = getCommitTime();
+
+          if (typeof onPostCommit === 'function') {
+            if (enableSchedulerTracing) {
+              onPostCommit(
+                id,
+                finishedWork.alternate === null ? 'mount' : 'update',
+                passiveEffectDuration,
+                commitTime,
+                finishedRoot.memoizedInteractions,
+              );
+            } else {
+              onPostCommit(
+                id,
+                finishedWork.alternate === null ? 'mount' : 'update',
+                passiveEffectDuration,
+                commitTime,
+              );
+            }
+          }
+
+          // Bubble times to the next nearest ancestor Profiler.
+          // After we process that Profiler, we'll bubble further up.
+          let parentFiber = finishedWork.return;
+          while (parentFiber !== null) {
+            if (parentFiber.tag === Profiler) {
+              const parentStateNode = parentFiber.stateNode;
+              parentStateNode.passiveEffectDuration += passiveEffectDuration;
+              break;
+            }
+            parentFiber = parentFiber.return;
+          }
+          break;
+        }
+        default:
+          break;
+      }
     }
   }
 }
@@ -418,9 +549,31 @@ function commitLifeCycles(
   switch (finishedWork.tag) {
     case FunctionComponent:
     case ForwardRef:
-    case SimpleMemoComponent: {
-      commitHookEffectList(UnmountLayout, MountLayout, finishedWork);
-      break;
+    case SimpleMemoComponent:
+    case Block: {
+      // At this point layout effects have already been destroyed (during mutation phase).
+      // This is done to prevent sibling component effects from interfering with each other,
+      // e.g. a destroy function in one component should never override a ref set
+      // by a create function in another component during the same commit.
+      if (
+        enableProfilerTimer &&
+        enableProfilerCommitHooks &&
+        finishedWork.mode & ProfileMode
+      ) {
+        try {
+          startLayoutEffectTimer();
+          commitHookEffectListMount(HookLayout | HookHasEffect, finishedWork);
+        } finally {
+          recordLayoutEffectDuration(finishedWork);
+        }
+      } else {
+        commitHookEffectListMount(HookLayout | HookHasEffect, finishedWork);
+      }
+
+      if (runAllPassiveEffectDestroysBeforeCreates) {
+        schedulePassiveEffects(finishedWork);
+      }
+      return;
     }
     case ClassComponent: {
       const instance = finishedWork.stateNode;
@@ -435,27 +588,42 @@ function commitLifeCycles(
               finishedWork.type === finishedWork.elementType &&
               !didWarnAboutReassigningProps
             ) {
-              warning(
-                instance.props === finishedWork.memoizedProps,
-                'Expected %s props to match memoized props before ' +
-                  'componentDidMount. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.props`. ' +
-                  'Please file an issue.',
-                getComponentName(finishedWork.type) || 'instance',
-              );
-              warning(
-                instance.state === finishedWork.memoizedState,
-                'Expected %s state to match memoized state before ' +
-                  'componentDidMount. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.props`. ' +
-                  'Please file an issue.',
-                getComponentName(finishedWork.type) || 'instance',
-              );
+              if (instance.props !== finishedWork.memoizedProps) {
+                console.error(
+                  'Expected %s props to match memoized props before ' +
+                    'componentDidMount. ' +
+                    'This might either be because of a bug in React, or because ' +
+                    'a component reassigns its own `this.props`. ' +
+                    'Please file an issue.',
+                  getComponentName(finishedWork.type) || 'instance',
+                );
+              }
+              if (instance.state !== finishedWork.memoizedState) {
+                console.error(
+                  'Expected %s state to match memoized state before ' +
+                    'componentDidMount. ' +
+                    'This might either be because of a bug in React, or because ' +
+                    'a component reassigns its own `this.state`. ' +
+                    'Please file an issue.',
+                  getComponentName(finishedWork.type) || 'instance',
+                );
+              }
             }
           }
-          instance.componentDidMount();
+          if (
+            enableProfilerTimer &&
+            enableProfilerCommitHooks &&
+            finishedWork.mode & ProfileMode
+          ) {
+            try {
+              startLayoutEffectTimer();
+              instance.componentDidMount();
+            } finally {
+              recordLayoutEffectDuration(finishedWork);
+            }
+          } else {
+            instance.componentDidMount();
+          }
           stopPhaseTimer();
         } else {
           const prevProps =
@@ -472,31 +640,50 @@ function commitLifeCycles(
               finishedWork.type === finishedWork.elementType &&
               !didWarnAboutReassigningProps
             ) {
-              warning(
-                instance.props === finishedWork.memoizedProps,
-                'Expected %s props to match memoized props before ' +
-                  'componentDidUpdate. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.props`. ' +
-                  'Please file an issue.',
-                getComponentName(finishedWork.type) || 'instance',
-              );
-              warning(
-                instance.state === finishedWork.memoizedState,
-                'Expected %s state to match memoized state before ' +
-                  'componentDidUpdate. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.props`. ' +
-                  'Please file an issue.',
-                getComponentName(finishedWork.type) || 'instance',
-              );
+              if (instance.props !== finishedWork.memoizedProps) {
+                console.error(
+                  'Expected %s props to match memoized props before ' +
+                    'componentDidUpdate. ' +
+                    'This might either be because of a bug in React, or because ' +
+                    'a component reassigns its own `this.props`. ' +
+                    'Please file an issue.',
+                  getComponentName(finishedWork.type) || 'instance',
+                );
+              }
+              if (instance.state !== finishedWork.memoizedState) {
+                console.error(
+                  'Expected %s state to match memoized state before ' +
+                    'componentDidUpdate. ' +
+                    'This might either be because of a bug in React, or because ' +
+                    'a component reassigns its own `this.state`. ' +
+                    'Please file an issue.',
+                  getComponentName(finishedWork.type) || 'instance',
+                );
+              }
             }
           }
-          instance.componentDidUpdate(
-            prevProps,
-            prevState,
-            instance.__reactInternalSnapshotBeforeUpdate,
-          );
+          if (
+            enableProfilerTimer &&
+            enableProfilerCommitHooks &&
+            finishedWork.mode & ProfileMode
+          ) {
+            try {
+              startLayoutEffectTimer();
+              instance.componentDidUpdate(
+                prevProps,
+                prevState,
+                instance.__reactInternalSnapshotBeforeUpdate,
+              );
+            } finally {
+              recordLayoutEffectDuration(finishedWork);
+            }
+          } else {
+            instance.componentDidUpdate(
+              prevProps,
+              prevState,
+              instance.__reactInternalSnapshotBeforeUpdate,
+            );
+          }
           stopPhaseTimer();
         }
       }
@@ -507,35 +694,32 @@ function commitLifeCycles(
             finishedWork.type === finishedWork.elementType &&
             !didWarnAboutReassigningProps
           ) {
-            warning(
-              instance.props === finishedWork.memoizedProps,
-              'Expected %s props to match memoized props before ' +
-                'processing the update queue. ' +
-                'This might either be because of a bug in React, or because ' +
-                'a component reassigns its own `this.props`. ' +
-                'Please file an issue.',
-              getComponentName(finishedWork.type) || 'instance',
-            );
-            warning(
-              instance.state === finishedWork.memoizedState,
-              'Expected %s state to match memoized state before ' +
-                'processing the update queue. ' +
-                'This might either be because of a bug in React, or because ' +
-                'a component reassigns its own `this.props`. ' +
-                'Please file an issue.',
-              getComponentName(finishedWork.type) || 'instance',
-            );
+            if (instance.props !== finishedWork.memoizedProps) {
+              console.error(
+                'Expected %s props to match memoized props before ' +
+                  'processing the update queue. ' +
+                  'This might either be because of a bug in React, or because ' +
+                  'a component reassigns its own `this.props`. ' +
+                  'Please file an issue.',
+                getComponentName(finishedWork.type) || 'instance',
+              );
+            }
+            if (instance.state !== finishedWork.memoizedState) {
+              console.error(
+                'Expected %s state to match memoized state before ' +
+                  'processing the update queue. ' +
+                  'This might either be because of a bug in React, or because ' +
+                  'a component reassigns its own `this.state`. ' +
+                  'Please file an issue.',
+                getComponentName(finishedWork.type) || 'instance',
+              );
+            }
           }
         }
         // We could update instance props and state here,
         // but instead we rely on them being set during last render.
         // TODO: revisit this when we implement resuming.
-        commitUpdateQueue(
-          finishedWork,
-          updateQueue,
-          instance,
-          committedExpirationTime,
-        );
+        commitUpdateQueue(finishedWork, updateQueue, instance);
       }
       return;
     }
@@ -553,12 +737,7 @@ function commitLifeCycles(
               break;
           }
         }
-        commitUpdateQueue(
-          finishedWork,
-          updateQueue,
-          instance,
-          committedExpirationTime,
-        );
+        commitUpdateQueue(finishedWork, updateQueue, instance);
       }
       return;
     }
@@ -587,7 +766,10 @@ function commitLifeCycles(
     }
     case Profiler: {
       if (enableProfilerTimer) {
-        const onRender = finishedWork.memoizedProps.onRender;
+        const {onCommit, onRender} = finishedWork.memoizedProps;
+        const {effectDuration} = finishedWork.stateNode;
+
+        const commitTime = getCommitTime();
 
         if (typeof onRender === 'function') {
           if (enableSchedulerTracing) {
@@ -597,7 +779,7 @@ function commitLifeCycles(
               finishedWork.actualDuration,
               finishedWork.treeBaseDuration,
               finishedWork.actualStartTime,
-              getCommitTime(),
+              commitTime,
               finishedRoot.memoizedInteractions,
             );
           } else {
@@ -607,8 +789,46 @@ function commitLifeCycles(
               finishedWork.actualDuration,
               finishedWork.treeBaseDuration,
               finishedWork.actualStartTime,
-              getCommitTime(),
+              commitTime,
             );
+          }
+        }
+
+        if (enableProfilerCommitHooks) {
+          if (typeof onCommit === 'function') {
+            if (enableSchedulerTracing) {
+              onCommit(
+                finishedWork.memoizedProps.id,
+                current === null ? 'mount' : 'update',
+                effectDuration,
+                commitTime,
+                finishedRoot.memoizedInteractions,
+              );
+            } else {
+              onCommit(
+                finishedWork.memoizedProps.id,
+                current === null ? 'mount' : 'update',
+                effectDuration,
+                commitTime,
+              );
+            }
+          }
+
+          // Schedule a passive effect for this Profiler to call onPostCommit hooks.
+          // This effect should be scheduled even if there is no onPostCommit callback for this Profiler,
+          // because the effect is also where times bubble to parent Profilers.
+          enqueuePendingPassiveProfilerEffect(finishedWork);
+
+          // Propagate layout effect durations to the next nearest Profiler ancestor.
+          // Do not reset these values until the next render so DevTools has a chance to read them first.
+          let parentFiber = finishedWork.return;
+          while (parentFiber !== null) {
+            if (parentFiber.tag === Profiler) {
+              const parentStateNode = parentFiber.stateNode;
+              parentStateNode.effectDuration += effectDuration;
+              break;
+            }
+            parentFiber = parentFiber.return;
           }
         }
       }
@@ -623,14 +843,12 @@ function commitLifeCycles(
     case FundamentalComponent:
     case ScopeComponent:
       return;
-    default: {
-      invariant(
-        false,
-        'This unit of work tag should not have side-effects. This error is ' +
-          'likely caused by a bug in React. Please file an issue.',
-      );
-    }
   }
+  invariant(
+    false,
+    'This unit of work tag should not have side-effects. This error is ' +
+      'likely caused by a bug in React. Please file an issue.',
+  );
 }
 
 function hideOrUnhideAllChildren(finishedWork, isHidden) {
@@ -705,8 +923,7 @@ function commitAttachRef(finishedWork: Fiber) {
     } else {
       if (__DEV__) {
         if (!ref.hasOwnProperty('current')) {
-          warningWithoutStack(
-            false,
+          console.error(
             'Unexpected ref object provided for %s. ' +
               'Use either a ref-setter function or React.createRef().%s',
             getComponentName(finishedWork.type),
@@ -745,42 +962,85 @@ function commitUnmount(
     case FunctionComponent:
     case ForwardRef:
     case MemoComponent:
-    case SimpleMemoComponent: {
+    case SimpleMemoComponent:
+    case Block: {
       const updateQueue: FunctionComponentUpdateQueue | null = (current.updateQueue: any);
       if (updateQueue !== null) {
         const lastEffect = updateQueue.lastEffect;
         if (lastEffect !== null) {
           const firstEffect = lastEffect.next;
 
-          // When the owner fiber is deleted, the destroy function of a passive
-          // effect hook is called during the synchronous commit phase. This is
-          // a concession to implementation complexity. Calling it in the
-          // passive effect phase (like they usually are, when dependencies
-          // change during an update) would require either traversing the
-          // children of the deleted fiber again, or including unmount effects
-          // as part of the fiber effect list.
-          //
-          // Because this is during the sync commit phase, we need to change
-          // the priority.
-          //
-          // TODO: Reconsider this implementation trade off.
-          const priorityLevel =
-            renderPriorityLevel > NormalPriority
-              ? NormalPriority
-              : renderPriorityLevel;
-          runWithPriority(priorityLevel, () => {
+          if (
+            deferPassiveEffectCleanupDuringUnmount &&
+            runAllPassiveEffectDestroysBeforeCreates
+          ) {
             let effect = firstEffect;
             do {
-              const destroy = effect.destroy;
+              const {destroy, tag} = effect;
               if (destroy !== undefined) {
-                safelyCallDestroy(current, destroy);
+                if ((tag & HookPassive) !== NoHookEffect) {
+                  enqueuePendingPassiveHookEffectUnmount(current, effect);
+                } else {
+                  if (
+                    enableProfilerTimer &&
+                    enableProfilerCommitHooks &&
+                    current.mode & ProfileMode
+                  ) {
+                    startLayoutEffectTimer();
+                    safelyCallDestroy(current, destroy);
+                    recordLayoutEffectDuration(current);
+                  } else {
+                    safelyCallDestroy(current, destroy);
+                  }
+                }
               }
               effect = effect.next;
             } while (effect !== firstEffect);
-          });
+          } else {
+            // When the owner fiber is deleted, the destroy function of a passive
+            // effect hook is called during the synchronous commit phase. This is
+            // a concession to implementation complexity. Calling it in the
+            // passive effect phase (like they usually are, when dependencies
+            // change during an update) would require either traversing the
+            // children of the deleted fiber again, or including unmount effects
+            // as part of the fiber effect list.
+            //
+            // Because this is during the sync commit phase, we need to change
+            // the priority.
+            //
+            // TODO: Reconsider this implementation trade off.
+            const priorityLevel =
+              renderPriorityLevel > NormalPriority
+                ? NormalPriority
+                : renderPriorityLevel;
+            runWithPriority(priorityLevel, () => {
+              let effect = firstEffect;
+              do {
+                const {destroy, tag} = effect;
+                if (destroy !== undefined) {
+                  if (
+                    enableProfilerTimer &&
+                    enableProfilerCommitHooks &&
+                    current.mode & ProfileMode
+                  ) {
+                    if ((tag & HookPassive) !== NoHookEffect) {
+                      safelyCallDestroy(current, destroy);
+                    } else {
+                      startLayoutEffectTimer();
+                      safelyCallDestroy(current, destroy);
+                      recordLayoutEffectDuration(current);
+                    }
+                  } else {
+                    safelyCallDestroy(current, destroy);
+                  }
+                }
+                effect = effect.next;
+              } while (effect !== firstEffect);
+            });
+          }
         }
       }
-      break;
+      return;
     }
     case ClassComponent: {
       safelyDetachRef(current);
@@ -791,24 +1051,8 @@ function commitUnmount(
       return;
     }
     case HostComponent: {
-      if (enableFlareAPI) {
-        const dependencies = current.dependencies;
-
-        if (dependencies !== null) {
-          const respondersMap = dependencies.responders;
-          if (respondersMap !== null) {
-            const responderInstances = Array.from(respondersMap.values());
-            for (
-              let i = 0, length = responderInstances.length;
-              i < length;
-              i++
-            ) {
-              const responderInstance = responderInstances[i];
-              unmountResponderInstance(responderInstance);
-            }
-            dependencies.responders = null;
-          }
-        }
+      if (enableDeprecatedFlareAPI) {
+        unmountDeprecatedResponderListeners(current);
         beforeRemoveInstance(current.stateNode);
       }
       safelyDetachRef(current);
@@ -848,9 +1092,13 @@ function commitUnmount(
       return;
     }
     case ScopeComponent: {
+      if (enableDeprecatedFlareAPI) {
+        unmountDeprecatedResponderListeners(current);
+      }
       if (enableScopeAPI) {
         safelyDetachRef(current);
       }
+      return;
     }
   }
 }
@@ -911,6 +1159,7 @@ function detachFiber(current: Fiber) {
   current.lastEffect = null;
   current.pendingProps = null;
   current.memoizedProps = null;
+  current.stateNode = null;
   if (alternate !== null) {
     detachFiber(alternate);
   }
@@ -921,8 +1170,11 @@ function emptyPortalContainer(current: Fiber) {
     return;
   }
 
-  const portal: {containerInfo: Container, pendingChildren: ChildSet} =
-    current.stateNode;
+  const portal: {
+    containerInfo: Container,
+    pendingChildren: ChildSet,
+    ...
+  } = current.stateNode;
   const {containerInfo} = portal;
   const emptyChildSet = createContainerChildSet(containerInfo);
   replaceContainerChildren(containerInfo, emptyChildSet);
@@ -945,20 +1197,18 @@ function commitContainer(finishedWork: Fiber) {
       const portalOrRoot: {
         containerInfo: Container,
         pendingChildren: ChildSet,
-      } =
-        finishedWork.stateNode;
+        ...
+      } = finishedWork.stateNode;
       const {containerInfo, pendingChildren} = portalOrRoot;
       replaceContainerChildren(containerInfo, pendingChildren);
       return;
     }
-    default: {
-      invariant(
-        false,
-        'This unit of work tag should not have side-effects. This error is ' +
-          'likely caused by a bug in React. Please file an issue.',
-      );
-    }
   }
+  invariant(
+    false,
+    'This unit of work tag should not have side-effects. This error is ' +
+      'likely caused by a bug in React. Please file an issue.',
+  );
 }
 
 function getHostParentFiber(fiber: Fiber): Fiber {
@@ -1078,44 +1328,72 @@ function commitPlacement(finishedWork: Fiber): void {
   const before = getHostSibling(finishedWork);
   // We only have the top Fiber that was inserted but we need to recurse down its
   // children to find all the terminal nodes.
-  let node: Fiber = finishedWork;
-  while (true) {
-    const isHost = node.tag === HostComponent || node.tag === HostText;
-    if (isHost || (enableFundamentalAPI && node.tag === FundamentalComponent)) {
-      const stateNode = isHost ? node.stateNode : node.stateNode.instance;
-      if (before) {
-        if (isContainer) {
-          insertInContainerBefore(parent, stateNode, before);
-        } else {
-          insertBefore(parent, stateNode, before);
-        }
-      } else {
-        if (isContainer) {
-          appendChildToContainer(parent, stateNode);
-        } else {
-          appendChild(parent, stateNode);
-        }
+  if (isContainer) {
+    insertOrAppendPlacementNodeIntoContainer(finishedWork, before, parent);
+  } else {
+    insertOrAppendPlacementNode(finishedWork, before, parent);
+  }
+}
+
+function insertOrAppendPlacementNodeIntoContainer(
+  node: Fiber,
+  before: ?Instance,
+  parent: Container,
+): void {
+  const {tag} = node;
+  const isHost = tag === HostComponent || tag === HostText;
+  if (isHost || (enableFundamentalAPI && tag === FundamentalComponent)) {
+    const stateNode = isHost ? node.stateNode : node.stateNode.instance;
+    if (before) {
+      insertInContainerBefore(parent, stateNode, before);
+    } else {
+      appendChildToContainer(parent, stateNode);
+    }
+  } else if (tag === HostPortal) {
+    // If the insertion itself is a portal, then we don't want to traverse
+    // down its children. Instead, we'll get insertions from each child in
+    // the portal directly.
+  } else {
+    const child = node.child;
+    if (child !== null) {
+      insertOrAppendPlacementNodeIntoContainer(child, before, parent);
+      let sibling = child.sibling;
+      while (sibling !== null) {
+        insertOrAppendPlacementNodeIntoContainer(sibling, before, parent);
+        sibling = sibling.sibling;
       }
-    } else if (node.tag === HostPortal) {
-      // If the insertion itself is a portal, then we don't want to traverse
-      // down its children. Instead, we'll get insertions from each child in
-      // the portal directly.
-    } else if (node.child !== null) {
-      node.child.return = node;
-      node = node.child;
-      continue;
     }
-    if (node === finishedWork) {
-      return;
+  }
+}
+
+function insertOrAppendPlacementNode(
+  node: Fiber,
+  before: ?Instance,
+  parent: Instance,
+): void {
+  const {tag} = node;
+  const isHost = tag === HostComponent || tag === HostText;
+  if (isHost || (enableFundamentalAPI && tag === FundamentalComponent)) {
+    const stateNode = isHost ? node.stateNode : node.stateNode.instance;
+    if (before) {
+      insertBefore(parent, stateNode, before);
+    } else {
+      appendChild(parent, stateNode);
     }
-    while (node.sibling === null) {
-      if (node.return === null || node.return === finishedWork) {
-        return;
+  } else if (tag === HostPortal) {
+    // If the insertion itself is a portal, then we don't want to traverse
+    // down its children. Instead, we'll get insertions from each child in
+    // the portal directly.
+  } else {
+    const child = node.child;
+    if (child !== null) {
+      insertOrAppendPlacementNode(child, before, parent);
+      let sibling = child.sibling;
+      while (sibling !== null) {
+        insertOrAppendPlacementNode(sibling, before, parent);
+        sibling = sibling.sibling;
       }
-      node = node.return;
     }
-    node.sibling.return = node.return;
-    node = node.sibling;
   }
 }
 
@@ -1289,10 +1567,30 @@ function commitWork(current: Fiber | null, finishedWork: Fiber): void {
       case FunctionComponent:
       case ForwardRef:
       case MemoComponent:
-      case SimpleMemoComponent: {
-        // Note: We currently never use MountMutation, but useLayout uses
-        // UnmountMutation.
-        commitHookEffectList(UnmountMutation, MountMutation, finishedWork);
+      case SimpleMemoComponent:
+      case Block: {
+        // Layout effects are destroyed during the mutation phase so that all
+        // destroy functions for all fibers are called before any create functions.
+        // This prevents sibling component effects from interfering with each other,
+        // e.g. a destroy function in one component should never override a ref set
+        // by a create function in another component during the same commit.
+        if (
+          enableProfilerTimer &&
+          enableProfilerCommitHooks &&
+          finishedWork.mode & ProfileMode
+        ) {
+          try {
+            startLayoutEffectTimer();
+            commitHookEffectListUnmount(
+              HookLayout | HookHasEffect,
+              finishedWork,
+            );
+          } finally {
+            recordLayoutEffectDuration(finishedWork);
+          }
+        } else {
+          commitHookEffectListUnmount(HookLayout | HookHasEffect, finishedWork);
+        }
         return;
       }
       case Profiler: {
@@ -1328,10 +1626,27 @@ function commitWork(current: Fiber | null, finishedWork: Fiber): void {
     case FunctionComponent:
     case ForwardRef:
     case MemoComponent:
-    case SimpleMemoComponent: {
-      // Note: We currently never use MountMutation, but useLayout uses
-      // UnmountMutation.
-      commitHookEffectList(UnmountMutation, MountMutation, finishedWork);
+    case SimpleMemoComponent:
+    case Block: {
+      // Layout effects are destroyed during the mutation phase so that all
+      // destroy functions for all fibers are called before any create functions.
+      // This prevents sibling component effects from interfering with each other,
+      // e.g. a destroy function in one component should never override a ref set
+      // by a create function in another component during the same commit.
+      if (
+        enableProfilerTimer &&
+        enableProfilerCommitHooks &&
+        finishedWork.mode & ProfileMode
+      ) {
+        try {
+          startLayoutEffectTimer();
+          commitHookEffectListUnmount(HookLayout | HookHasEffect, finishedWork);
+        } finally {
+          recordLayoutEffectDuration(finishedWork);
+        }
+      } else {
+        commitHookEffectListUnmount(HookLayout | HookHasEffect, finishedWork);
+      }
       return;
     }
     case ClassComponent: {
@@ -1360,11 +1675,11 @@ function commitWork(current: Fiber | null, finishedWork: Fiber): void {
             finishedWork,
           );
         }
-        if (enableFlareAPI) {
-          const prevListeners = oldProps.listeners;
-          const nextListeners = newProps.listeners;
+        if (enableDeprecatedFlareAPI) {
+          const prevListeners = oldProps.DEPRECATED_flareListeners;
+          const nextListeners = newProps.DEPRECATED_flareListeners;
           if (prevListeners !== nextListeners) {
-            updateEventListeners(nextListeners, finishedWork, null);
+            updateDeprecatedEventListeners(nextListeners, finishedWork, null);
           }
         }
       }
@@ -1416,33 +1731,33 @@ function commitWork(current: Fiber | null, finishedWork: Fiber): void {
       if (enableFundamentalAPI) {
         const fundamentalInstance = finishedWork.stateNode;
         updateFundamentalComponent(fundamentalInstance);
+        return;
       }
-      return;
+      break;
     }
     case ScopeComponent: {
       if (enableScopeAPI) {
         const scopeInstance = finishedWork.stateNode;
         scopeInstance.fiber = finishedWork;
-        if (enableFlareAPI) {
+        if (enableDeprecatedFlareAPI) {
           const newProps = finishedWork.memoizedProps;
           const oldProps = current !== null ? current.memoizedProps : newProps;
-          const prevListeners = oldProps.listeners;
-          const nextListeners = newProps.listeners;
-          if (prevListeners !== nextListeners) {
-            updateEventListeners(nextListeners, finishedWork, null);
+          const prevListeners = oldProps.DEPRECATED_flareListeners;
+          const nextListeners = newProps.DEPRECATED_flareListeners;
+          if (prevListeners !== nextListeners || current === null) {
+            updateDeprecatedEventListeners(nextListeners, finishedWork, null);
           }
         }
+        return;
       }
-      return;
-    }
-    default: {
-      invariant(
-        false,
-        'This unit of work tag should not have side-effects. This error is ' +
-          'likely caused by a bug in React. Please file an issue.',
-      );
+      break;
     }
   }
+  invariant(
+    false,
+    'This unit of work tag should not have side-effects. This error is ' +
+      'likely caused by a bug in React. Please file an issue.',
+  );
 }
 
 function commitSuspenseComponent(finishedWork: Fiber) {
@@ -1471,7 +1786,7 @@ function commitSuspenseComponent(finishedWork: Fiber) {
       }
     } else if (__DEV__) {
       if (suspenseCallback !== undefined) {
-        warning(false, 'Unexpected type for suspenseCallback.');
+        console.error('Unexpected type for suspenseCallback.');
       }
     }
   }

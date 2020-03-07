@@ -8,20 +8,19 @@
  */
 
 import invariant from 'shared/invariant';
-import warning from 'shared/warning';
 
 import ReactControlledValuePropTypes from '../shared/ReactControlledValuePropTypes';
 import {getCurrentFiberOwnerNameInDevOrNull} from 'react-reconciler/src/ReactCurrentFiber';
 import {getToStringValue, toString} from './ToStringValue';
 import type {ToStringValue} from './ToStringValue';
 
+import {disableTextareaChildren} from 'shared/ReactFeatureFlags';
+
 let didWarnValDefaultVal = false;
 
-type TextAreaWithWrapperState = HTMLTextAreaElement & {
-  _wrapperState: {
-    initialValue: ToStringValue,
-  },
-};
+type TextAreaWithWrapperState = HTMLTextAreaElement & {|
+  _wrapperState: {|initialValue: ToStringValue|},
+|};
 
 /**
  * Implements a <textarea> host component that allows setting `value`, and
@@ -71,8 +70,7 @@ export function initWrapperState(element: Element, props: Object) {
       props.defaultValue !== undefined &&
       !didWarnValDefaultVal
     ) {
-      warning(
-        false,
+      console.error(
         '%s contains a textarea with both value and defaultValue props. ' +
           'Textarea elements must be either controlled or uncontrolled ' +
           '(specify either the value prop, or the defaultValue prop, but not ' +
@@ -89,30 +87,29 @@ export function initWrapperState(element: Element, props: Object) {
 
   // Only bother fetching default value if we're going to use it
   if (initialValue == null) {
-    let defaultValue = props.defaultValue;
-    // TODO (yungsters): Remove support for children content in <textarea>.
-    let children = props.children;
+    let {children, defaultValue} = props;
     if (children != null) {
       if (__DEV__) {
-        warning(
-          false,
+        console.error(
           'Use the `defaultValue` or `value` props instead of setting ' +
             'children on <textarea>.',
         );
       }
-      invariant(
-        defaultValue == null,
-        'If you supply `defaultValue` on a <textarea>, do not pass children.',
-      );
-      if (Array.isArray(children)) {
+      if (!disableTextareaChildren) {
         invariant(
-          children.length <= 1,
-          '<textarea> can only have at most one child.',
+          defaultValue == null,
+          'If you supply `defaultValue` on a <textarea>, do not pass children.',
         );
-        children = children[0];
-      }
+        if (Array.isArray(children)) {
+          invariant(
+            children.length <= 1,
+            '<textarea> can only have at most one child.',
+          );
+          children = children[0];
+        }
 
-      defaultValue = children;
+        defaultValue = children;
+      }
     }
     if (defaultValue == null) {
       defaultValue = '';

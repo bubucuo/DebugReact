@@ -7,6 +7,8 @@
  * @flow
  */
 
+import type {RootType} from './ReactDOMRoot';
+
 import {
   precacheFiberNode,
   updateFiberProps,
@@ -34,7 +36,7 @@ import {validateDOMNesting, updatedAncestorInfo} from './validateDOMNesting';
 import {
   isEnabled as ReactBrowserEventEmitterIsEnabled,
   setEnabled as ReactBrowserEventEmitterSetEnabled,
-} from '../events/ReactBrowserEventEmitter';
+} from '../events/ReactDOMEventListener';
 import {getChildNamespace} from '../shared/DOMNamespaces';
 import {
   ELEMENT_NODE,
@@ -45,19 +47,28 @@ import {
 } from '../shared/HTMLNodeType';
 import dangerousStyleValue from '../shared/dangerousStyleValue';
 
-import type {DOMContainer} from './ReactDOM';
 import type {
   ReactDOMEventResponder,
   ReactDOMEventResponderInstance,
   ReactDOMFundamentalComponentInstance,
 } from 'shared/ReactDOMTypes';
 import {
-  addRootEventTypesForResponderInstance,
   mountEventResponder,
   unmountEventResponder,
-  dispatchEventForResponderEventSystem,
-} from '../events/DOMEventResponderSystem';
+  DEPRECATED_dispatchEventForResponderEventSystem,
+} from '../events/DeprecatedDOMEventResponderSystem';
 import {retryIfBlockedOn} from '../events/ReactDOMEventReplaying';
+
+import {
+  enableSuspenseServerRenderer,
+  enableDeprecatedFlareAPI,
+  enableFundamentalAPI,
+} from 'shared/ReactFeatureFlags';
+import {HostComponent} from 'shared/ReactWorkTags';
+import {
+  RESPONDER_EVENT_SYSTEM,
+  IS_PASSIVE,
+} from 'legacy-events/EventSystemFlags';
 
 export type Type = string;
 export type Props = {
@@ -66,13 +77,12 @@ export type Props = {
   hidden?: boolean,
   suppressHydrationWarning?: boolean,
   dangerouslySetInnerHTML?: mixed,
-  style?: {
-    display?: string,
-  },
+  style?: {display?: string, ...},
   bottom?: null | number,
   left?: null | number,
   right?: null | number,
   top?: null | number,
+  ...
 };
 export type EventTargetChildElement = {
   type: string,
@@ -84,18 +94,24 @@ export type EventTargetChildElement = {
       left?: string,
       right?: string,
       top?: string,
+      ...
     },
+    ...
   },
+  ...
 };
-export type Container = Element | Document;
+export type Container =
+  | (Element & {_reactRootContainer?: RootType, ...})
+  | (Document & {_reactRootContainer?: RootType, ...});
 export type Instance = Element;
 export type TextInstance = Text;
-export type SuspenseInstance = Comment & {_reactRetry?: () => void};
+export type SuspenseInstance = Comment & {_reactRetry?: () => void, ...};
 export type HydratableInstance = Instance | TextInstance | SuspenseInstance;
 export type PublicInstance = Element | Text;
 type HostContextDev = {
   namespace: string,
   ancestorInfo: mixed,
+  ...
 };
 type HostContextProd = string;
 export type HostContext = HostContextDev | HostContextProd;
@@ -109,16 +125,6 @@ type SelectionInformation = {|
   focusedElem: null | HTMLElement,
   selectionRange: mixed,
 |};
-
-import {
-  enableSuspenseServerRenderer,
-  enableFlareAPI,
-  enableFundamentalAPI,
-} from 'shared/ReactFeatureFlags';
-import {
-  RESPONDER_EVENT_SYSTEM,
-  IS_PASSIVE,
-} from 'legacy-events/EventSystemFlags';
 
 let SUPPRESS_HYDRATION_WARNING;
 if (__DEV__) {
@@ -213,7 +219,7 @@ export function resetAfterCommit(containerInfo: Container): void {
   restoreSelection(selectionInformation);
   ReactBrowserEventEmitterSetEnabled(eventsEnabled);
   eventsEnabled = null;
-  if (enableFlareAPI) {
+  if (enableDeprecatedFlareAPI) {
     const activeElementDetached = (selectionInformation: any)
       .activeElementDetached;
     if (activeElementDetached !== null) {
@@ -348,9 +354,9 @@ export const warnsIfNotActing = true;
 // This initialization code may run even on server environments
 // if a component just imports ReactDOM (e.g. for findDOMNode).
 // Some environments might not have setTimeout or clearTimeout.
-export const scheduleTimeout =
+export const scheduleTimeout: any =
   typeof setTimeout === 'function' ? setTimeout : (undefined: any);
-export const cancelTimeout =
+export const cancelTimeout: any =
   typeof clearTimeout === 'function' ? clearTimeout : (undefined: any);
 export const noTimeout = -1;
 
@@ -416,7 +422,7 @@ export function appendChild(
 }
 
 export function appendChildToContainer(
-  container: DOMContainer,
+  container: Container,
   child: Instance | TextInstance,
 ): void {
   let parentNode;
@@ -469,7 +475,7 @@ function dispatchBeforeDetachedBlur(target: HTMLElement): void {
   const targetInstance = getClosestInstanceFromNode(target);
   ((selectionInformation: any): SelectionInformation).activeElementDetached = target;
 
-  dispatchEventForResponderEventSystem(
+  DEPRECATED_dispatchEventForResponderEventSystem(
     'beforeblur',
     targetInstance,
     ({
@@ -482,7 +488,7 @@ function dispatchBeforeDetachedBlur(target: HTMLElement): void {
 }
 
 function dispatchDetachedBlur(target: HTMLElement): void {
-  dispatchEventForResponderEventSystem(
+  DEPRECATED_dispatchEventForResponderEventSystem(
     'blur',
     null,
     ({
@@ -503,7 +509,7 @@ export function beforeRemoveInstance(
   instance: Instance | TextInstance | SuspenseInstance,
 ): void {
   if (
-    enableFlareAPI &&
+    enableDeprecatedFlareAPI &&
     selectionInformation &&
     instance === selectionInformation.focusedElem
   ) {
@@ -582,7 +588,28 @@ export function clearSuspenseBoundaryFromContainer(
   retryIfBlockedOn(container);
 }
 
+function instanceContainsElem(instance: Instance, element: HTMLElement) {
+  let fiber = getClosestInstanceFromNode(element);
+  while (fiber !== null) {
+    if (fiber.tag === HostComponent && fiber.stateNode === instance) {
+      return true;
+    }
+    fiber = fiber.return;
+  }
+  return false;
+}
+
 export function hideInstance(instance: Instance): void {
+  // Ensure we trigger `onBeforeBlur` if the active focused elment
+  // is ether the instance of a child or the instance. We need
+  // to traverse the Fiber tree here rather than use node.contains()
+  // as the child node might be inside a Portal.
+  if (enableDeprecatedFlareAPI && selectionInformation) {
+    const focusedElem = selectionInformation.focusedElem;
+    if (focusedElem !== null && instanceContainsElem(instance, focusedElem)) {
+      dispatchBeforeDetachedBlur(((focusedElem: any): HTMLElement));
+    }
+  }
   // TODO: Does this work for all element types? What about MathML? Should we
   // pass host context to this method?
   instance = ((instance: any): HTMLElement);
@@ -945,7 +972,7 @@ export function didNotFindHydratableSuspenseInstance(
   }
 }
 
-export function mountResponderInstance(
+export function DEPRECATED_mountResponderInstance(
   responder: ReactDOMEventResponder,
   responderInstance: ReactDOMEventResponderInstance,
   responderProps: Object,
@@ -954,16 +981,9 @@ export function mountResponderInstance(
 ): ReactDOMEventResponderInstance {
   // Listen to events
   const doc = instance.ownerDocument;
-  const {
-    rootEventTypes,
-    targetEventTypes,
-  } = ((responder: any): ReactDOMEventResponder);
+  const {targetEventTypes} = ((responder: any): ReactDOMEventResponder);
   if (targetEventTypes !== null) {
     listenToEventResponderEventTypes(targetEventTypes, doc);
-  }
-  if (rootEventTypes !== null) {
-    addRootEventTypesForResponderInstance(responderInstance, rootEventTypes);
-    listenToEventResponderEventTypes(rootEventTypes, doc);
   }
   mountEventResponder(
     responder,
@@ -974,10 +994,10 @@ export function mountResponderInstance(
   return responderInstance;
 }
 
-export function unmountResponderInstance(
+export function DEPRECATED_unmountResponderInstance(
   responderInstance: ReactDOMEventResponderInstance,
 ): void {
-  if (enableFlareAPI) {
+  if (enableDeprecatedFlareAPI) {
     // TODO stop listening to targetEventTypes
     unmountEventResponder(responderInstance);
   }

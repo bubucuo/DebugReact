@@ -81,7 +81,7 @@ module.exports = function(webpackEnv) {
       isEnvDevelopment && require.resolve("style-loader"),
       isEnvProduction && {
         loader: MiniCssExtractPlugin.loader,
-        options: shouldUseRelativeAssetPaths ? { publicPath: "../../" } : {}
+        options: shouldUseRelativeAssetPaths ? {publicPath: "../../"} : {}
       },
       {
         loader: require.resolve("css-loader"),
@@ -297,9 +297,9 @@ module.exports = function(webpackEnv) {
         "react-reconciler": path.resolve(
           __dirname,
           "../src/react/packages/react-reconciler"
-        )
-        // 'react-events': path.resolve(__dirname, '../src/react/packages/events'),
-        // 'scheduler': path.resolve(__dirname, '../src/react/packages/scheduler'),
+        ),
+        "react-events": path.resolve(__dirname, "../src/react/packages/events")
+        // scheduler: path.resolve(__dirname, "../src/react/packages/scheduler")
       },
       plugins: [
         // Adds support for installing with Plug'n'Play, leading to faster installs and adding
@@ -324,7 +324,7 @@ module.exports = function(webpackEnv) {
       strictExportPresence: true,
       rules: [
         // Disable require.ensure as it's not a standard language feature.
-        { parser: { requireEnsure: false } },
+        {parser: {requireEnsure: false}},
 
         // First, run the linter.
         // It's important to do this before Babel processes the JS.
@@ -406,7 +406,7 @@ module.exports = function(webpackEnv) {
                 presets: [
                   [
                     require.resolve("babel-preset-react-app/dependencies"),
-                    { helpers: true }
+                    {helpers: true}
                   ]
                 ],
                 cacheDirectory: true,
