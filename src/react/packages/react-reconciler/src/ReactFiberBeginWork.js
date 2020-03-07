@@ -8,6 +8,7 @@
  */
 
 import type {ReactProviderType, ReactContext} from 'shared/ReactTypes';
+import type {BlockComponent} from 'react/src/block';
 import type {Fiber} from './ReactFiber';
 import type {FiberRoot} from './ReactFiberRoot';
 import type {ExpirationTime} from './ReactFiberExpirationTime';
@@ -59,6 +60,7 @@ import ReactSharedInternals from 'shared/ReactSharedInternals';
 import {
   debugRenderPhaseSideEffectsForStrictMode,
   disableLegacyContext,
+  disableModulePatternComponents,
   enableProfilerTimer,
   enableSchedulerTracing,
   enableSuspenseServerRenderer,
@@ -166,6 +168,7 @@ import {
   readLazyComponentType,
   resolveDefaultProps,
 } from './ReactFiberLazyComponent';
+import {initializeBlockComponentType} from 'shared/ReactLazyComponent';
 import {
   resolveLazyComponentTag,
   createFiberFromTypeAndProps,
@@ -181,6 +184,7 @@ import {
   renderDidSuspendDelayIfPossible,
   markUnprocessedUpdateTime,
 } from './ReactFiberWorkLoop';
+import {Resolved} from 'shared/ReactLazyStatusTags';
 
 const ReactCurrentOwner = ReactSharedInternals.ReactCurrentOwner;
 
@@ -699,10 +703,10 @@ function updateFunctionComponent(
   return workInProgress.child;
 }
 
-function updateBlock(
+function updateBlock<Props, Payload, Data>(
   current: Fiber | null,
   workInProgress: Fiber,
-  block: any,
+  block: BlockComponent<Props, Payload, Data>,
   nextProps: any,
   renderExpirationTime: ExpirationTime,
 ) {
@@ -710,8 +714,13 @@ function updateBlock(
   // hasn't yet mounted. This happens after the first render suspends.
   // We'll need to figure out if this is fine or can cause issues.
 
-  const render = block.render;
-  const data = block.query();
+  initializeBlockComponentType(block);
+  if (block._status !== Resolved) {
+    throw block._data;
+  }
+
+  const render = block._fn;
+  const data = block._data;
 
   // The rest is a fork of updateFunctionComponent
   let nextChildren;
@@ -1377,6 +1386,7 @@ function mountIndeterminateComponent(
   workInProgress.effectTag |= PerformedWork;
 
   if (
+    !disableModulePatternComponents &&
     typeof value === 'object' &&
     value !== null &&
     typeof value.render === 'function' &&
