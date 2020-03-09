@@ -298,8 +298,8 @@ module.exports = function(webpackEnv) {
           __dirname,
           "../src/react/packages/react-reconciler"
         ),
-        "react-events": path.resolve(__dirname, "../src/react/packages/events")
-        // scheduler: path.resolve(__dirname, "../src/react/packages/scheduler")
+        "react-events": path.resolve(__dirname, "../src/react/packages/events"),
+        scheduler: path.resolve(__dirname, "../src/react/packages/scheduler")
       },
       plugins: [
         // Adds support for installing with Plug'n'Play, leading to faster installs and adding

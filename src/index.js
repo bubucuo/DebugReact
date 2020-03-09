@@ -36,7 +36,6 @@ class ClassComponent extends React.Component {
   render() {
     const {name} = this.props;
     const {count} = this.state;
-    console.log("asasas", this); //sy-log
     return (
       <div className="classcmp border">
         <p>{name}</p>
@@ -72,9 +71,6 @@ const jsx = (
   </div>
 );
 
-console.log("ClassComponent", new ClassComponent()); //sy-log
-console.log("FunctionComponent", FunctionComponent); //sy-log
-// console.log("omg", Component.prototype, PureComponent.prototype);
-// console.log("当前React版本是:" + React.version);
+console.log("当前React版本是:" + React.version);
 
 ReactDOM.render(jsx, document.getElementById("root"));

@@ -32,6 +32,62 @@ export default function invariant(condition, format, a, b, c, d, e, f) {
 import ReactSharedInternals from "../react/src/ReactSharedInternals";
 ```
 
+
+
+4. /Users/gaoshaoyun/Documents/library/DebugReact/src/react/packages/scheduler/index.js
+
+   ```jsx
+   'use strict';
+   
+   export * from './src/Scheduler';
+   //添加以下
+   export {
+     unstable_flushAllWithoutAsserting,
+     unstable_flushNumberOfYields,
+     unstable_flushExpired,
+     unstable_clearYields,
+     unstable_flushUntilNextPaint,
+     unstable_flushAll,
+     unstable_yieldValue,
+     unstable_advanceTime,
+   } from './src/SchedulerHostConfig.js';
+   ```
+
+5. react/packages/scheduler/src/SchedulerHostConfig.js
+
+```js
+// 注释掉这里
+// throw new Error('This module must be shimmed by a specific build.');
+
+// 添加以下
+export {
+  unstable_flushAllWithoutAsserting,
+  unstable_flushNumberOfYields,
+  unstable_flushExpired,
+  unstable_clearYields,
+  unstable_flushUntilNextPaint,
+  unstable_flushAll,
+  unstable_yieldValue,
+  unstable_advanceTime,
+} from './forks/SchedulerHostConfig.mock.js';
+
+export {
+  requestHostCallback,
+  requestHostTimeout,
+  cancelHostTimeout,
+  shouldYieldToHost,
+  getCurrentTime,
+  forceFrameRate,
+  requestPaint,
+} from './forks/SchedulerHostConfig.default.js';
+```
+
+
+
+
+
+
+
 参考：
 https://github.com/nannongrousong/blog/issues/1
 https://github.com/bubucuo/react-sourcecode-debug-env
