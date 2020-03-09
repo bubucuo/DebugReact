@@ -1,15 +1,8 @@
-var React = require("react");
+import * as React from "react";
 import {Component, PureComponent, useState} from "react";
-import {render} from "react-dom";
-
-// import React from "./kreact-test/";
-// import ReactDOM, { useState } from "./kreact-test/ReactDOM";
-// import Component from "./kreact-test/Component";
+import * as ReactDOM from "react-dom";
 
 import "./index.css";
-// import TestPage from "./TestPage";
-
-// console.log("ReactDOM", ReactDOM);
 
 class ClassComponent extends React.Component {
   constructor(props) {
@@ -84,4 +77,4 @@ console.log("FunctionComponent", FunctionComponent); //sy-log
 // console.log("omg", Component.prototype, PureComponent.prototype);
 // console.log("当前React版本是:" + React.version);
 
-render(jsx, document.getElementById("root"));
+ReactDOM.render(jsx, document.getElementById("root"));
