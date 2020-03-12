@@ -18,20 +18,26 @@ class ClassComponent extends React.Component {
   }
 
   setCount = () => {
+    //ReactDOM.unstable_batchedUpdates(() => {
     this.setState({
       count: this.state.count + 1
     });
-    this.setState({
-      count: this.state.count + 2
-    });
-    console.log("count", this.state.count);
+    // this.setState({
+    //   count: this.state.count + 2
+    // });
+    console.log("复合事件的count", this.state.count);
+    // });
   };
   handle = () => {
-    this.setState({
-      count: this.state.count + 100
+    ReactDOM.unstable_batchedUpdates(() => {
+      this.setState({
+        count: this.state.count + 1 //00
+      });
+      // this.setState({
+      //   count: this.state.count + 2 //00
+      // });
+      console.log("原生事件的count", this.state.count);
     });
-    console.log("原生", this.state.count);
-    // ReactDOM.render(jsx, document.getElementById("root"));
   };
   render() {
     const {name} = this.props;
@@ -40,8 +46,8 @@ class ClassComponent extends React.Component {
       <div className="classcmp border">
         <p>{name}</p>
         <p>{count}</p>
-        <button onClick={this.setCount}>{count}</button>
-        <button id="handle">handle</button>
+        <button onClick={this.setCount}>复合事件{count}</button>
+        <button id="handle">原生handle</button>
       </div>
     );
   }
@@ -49,10 +55,10 @@ class ClassComponent extends React.Component {
 
 // 函数组件
 function FunctionComponent(props) {
-  const [count, setCount] = useState(0);
-  const _setCount = () => {
-    setCount(count + 1);
-  };
+  // const [count, setCount] = useState(0);
+  // const _setCount = () => {
+  //   setCount(count + 1);
+  // };
   return (
     <div className="function border">
       hello, {props.name}
