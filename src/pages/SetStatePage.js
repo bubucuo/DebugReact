@@ -8,15 +8,15 @@ export default class SetStatePage extends Component {
       count: 0
     };
   }
-  // componentDidMount() {
-  //   document.getElementById("host").addEventListener(
-  //     "click",
-  //     // 即react-reconciler/src/ReactFiberWorkLoop.js batchedUpdates
-  //     // () => ReactDOM.unstable_batchedUpdates(this.changeCount),
-  //     this.changeCount,
-  //     false
-  //   );
-  // }
+  componentDidMount() {
+    document.getElementById("host").addEventListener(
+      "click",
+      // 即react-reconciler/src/ReactFiberWorkLoop.js batchedUpdates
+      // () => ReactDOM.unstable_batchedUpdates(this.changeCount),
+      this.changeCount,
+      false
+    );
+  }
   changeValue = (v, callback) => {
     const {count} = this.state;
     if (callback) {
@@ -36,8 +36,8 @@ export default class SetStatePage extends Component {
   };
   changeCount = () => {
     this.changeValue(1);
-    // this.changeValue(2);
-    // this.changeValue(3);
+    this.changeValue(2);
+    this.changeValue(3);
 
     console.log("改变count", this.state.count); //sy-log
   };
@@ -58,10 +58,10 @@ export default class SetStatePage extends Component {
     const {count} = this.state;
     return (
       <div>
-        {/* <h3>SetStatePage</h3> */}
-        <h3>count: {count}</h3>
+        <h3>SetStatePage</h3>
+        <p>count: {count}</p>
         <button onClick={this.changeCount}>change count 合成事件</button>
-        {/* <button onClick={this.changeCountWithCallback}>
+        <button onClick={this.changeCountWithCallback}>
           change count 合成事件 with callback
         </button>
 
@@ -69,15 +69,7 @@ export default class SetStatePage extends Component {
           合成事件 setTimeout click
         </button>
 
-        <button id="host">原生事件</button> */}
-
-        {[1, 2, 3].map(item => {
-          return (
-            <p className="border" key={item}>
-              {item}
-            </p>
-          );
-        })}
+        <button id="host">原生事件</button>
       </div>
     );
   }
