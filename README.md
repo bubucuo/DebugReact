@@ -30,16 +30,15 @@ export default function invariant(condition, format, a, b, c, d, e, f) {
 //   React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
 
 import ReactSharedInternals from "../react/src/ReactSharedInternals";
+export default ReactSharedInternals;
 ```
-
-
 
 4. /Users/gaoshaoyun/Documents/library/DebugReact/src/react/packages/scheduler/index.js
 
    ```jsx
-   'use strict';
-   
-   export * from './src/Scheduler';
+   "use strict";
+
+   export * from "./src/Scheduler";
    //添加以下
    export {
      unstable_flushAllWithoutAsserting,
@@ -49,8 +48,8 @@ import ReactSharedInternals from "../react/src/ReactSharedInternals";
      unstable_flushUntilNextPaint,
      unstable_flushAll,
      unstable_yieldValue,
-     unstable_advanceTime,
-   } from './src/SchedulerHostConfig.js';
+     unstable_advanceTime
+   } from "./src/SchedulerHostConfig.js";
    ```
 
 5. react/packages/scheduler/src/SchedulerHostConfig.js
@@ -68,8 +67,8 @@ export {
   unstable_flushUntilNextPaint,
   unstable_flushAll,
   unstable_yieldValue,
-  unstable_advanceTime,
-} from './forks/SchedulerHostConfig.mock.js';
+  unstable_advanceTime
+} from "./forks/SchedulerHostConfig.mock.js";
 
 export {
   requestHostCallback,
@@ -78,15 +77,9 @@ export {
   shouldYieldToHost,
   getCurrentTime,
   forceFrameRate,
-  requestPaint,
-} from './forks/SchedulerHostConfig.default.js';
+  requestPaint
+} from "./forks/SchedulerHostConfig.default.js";
 ```
-
-
-
-
-
-
 
 参考：
 https://github.com/nannongrousong/blog/issues/1

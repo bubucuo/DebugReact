@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Component, PureComponent, useState} from "react";
 import * as ReactDOM from "react-dom";
+import App from "./App";
 
 import "./index.css";
 
@@ -29,24 +30,24 @@ class ClassComponent extends React.Component {
     // });
   };
   handle = () => {
-    ReactDOM.unstable_batchedUpdates(() => {
-      this.setState({
-        count: this.state.count + 1 //00
-      });
-      // this.setState({
-      //   count: this.state.count + 2 //00
-      // });
-      console.log("原生事件的count", this.state.count);
+    // ReactDOM.unstable_batchedUpdates(() => {
+    this.setState({
+      count: this.state.count + 1 //00
     });
+    this.setState({
+      count: this.state.count + 2 //00
+    });
+    console.log("原生事件的count", this.state.count);
+    // });
   };
   render() {
     const {name} = this.props;
     const {count} = this.state;
     return (
       <div className="classcmp border">
-        <p>{name}</p>
-        <p>{count}</p>
-        <button onClick={this.setCount}>复合事件{count}</button>
+        <h1>{name}</h1>
+        <p>count:{count}</p>
+        <button onClick={this.setCount}>复合事件</button>
         <button id="handle">原生handle</button>
       </div>
     );
@@ -79,4 +80,4 @@ const jsx = (
 
 console.log("当前React版本是:" + React.version);
 
-ReactDOM.render(jsx, document.getElementById("root"));
+ReactDOM.render(<App />, document.getElementById("root"));
