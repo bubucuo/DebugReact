@@ -34,17 +34,17 @@ export default class RefPage extends Component {
         <button onClick={() => this.setState({count: this.state.count + 1})}>
           click change count {count}
         </button>
-        {/* <div className="border">
+        <div className="border">
           <label htmlFor="">姓名</label>
           <input type="text" ref={this.nameInputRef} />
-        </div> */}
+        </div>
 
-        {/* <PasswordInput label="密码" ref={this.passwordRef} />
+        <PasswordInput label="密码" ref={this.passwordRef} />
 
-        <AgeWithRef label="年龄" ref={this.ageInputRef} /> */}
+        <AgeWithRef label="年龄" ref={this.ageInputRef} />
 
         <BirthInput label="生日" />
-        {/* 
+
         <CityInput label="城市" />
 
         <HocCountry label="国家" ref={this.countryInputRef} />
@@ -54,7 +54,7 @@ export default class RefPage extends Component {
           <input type="text" ref="galaxy" />
         </div>
 
-        <button onClick={this.submit}>submit</button> */}
+        <button onClick={this.submit}>submit</button>
       </div>
     );
   }
@@ -96,7 +96,7 @@ class BirthInput extends Component {
   }
 
   setTextInputRef = ele => {
-    // console.log("setTextInputRef--"); //sy-log
+    console.log("setTextInputRef--"); //sy-log
     this.birthInput = ele;
   };
 

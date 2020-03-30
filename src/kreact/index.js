@@ -1,12 +1,16 @@
+import {HostComponent, ClassComponent, FunctionComponent} from "./CONST";
+
 //!vnode 就代表虚拟dom节点
 //! node代表真实dom节点
 
 // 接收type, props, children， 返回一个vnode
 function createElement(type, props, ...children) {
   // console.log("createElement", arguments); //sy-log
+  let key = props.key;
   if (props) {
     delete props.__source;
     delete props.__self;
+    delete props.key;
   }
 
   let defaultProps = {};
@@ -15,13 +19,14 @@ function createElement(type, props, ...children) {
   }
   return {
     type: type,
+    key,
     props: {
       ...defaultProps,
       ...props,
       //!这里的处理与源码稍有不同，源里的话，只有一个元素，children是对象，多于一个的时候，是数组
-      children: children.map(child =>
-        typeof child === "object" ? child : createTextNode(child)
-      )
+      children: children.map(child => {
+        return typeof child === "object" ? child : createTextNode(child);
+      })
     }
   };
 }

@@ -1,4 +1,9 @@
-import {PLACEMENT, UPDATE, DELETIONS, Fragment} from "./CONST";
+import {PLACEMENT, UPDATE, DELETIONS, HostComponent} from "./CONST";
+import {
+  reconcileChildrenArray,
+  reconcileSingleElement,
+  createFiber
+} from "./reconcile";
 // todo 拓展视频 useState 实现update 以及 DELETIONS
 
 // 下一个子任务
@@ -23,7 +28,9 @@ function render(vnode, container) {
     base: currentRoot
   };
   deletions = [];
+
   nextUnitOfWork = wipRoot;
+  // nextUnitOfWork = createFiber(vnode);
 }
 
 // 根据vnode，创建一个node
@@ -41,31 +48,32 @@ function createNode(vnode) {
 
 // 构建fiber结构，遍历workInProgressFiber的子节点
 function reconcileChildren(workInProgressFiber, children) {
+  console.log("reconcileChildren", workInProgressFiber, children); //sy-log
+  for (let i = 0; i < children.length; i++) {
+    let child = children[i];
+    if (typeof child === "object") {
+      return reconcileSingleElement(workInProgressFiber, child);
+    }
+    if (typeof child === "string" || typeof child === "number") {
+    }
+    if (Array.isArray(child)) {
+      return reconcileChildrenArray(workInProgressFiber, child);
+    }
+  }
   // 构建fiber结构
   // 数组
   // 更新  删除 新增
   let prevSibling = null;
   let oldFiber = workInProgressFiber.base && workInProgressFiber.base.child;
-  let newIdx = 0;
-  for (; newIdx < children.length; newIdx++) {
-    let child = children[newIdx];
-    if (Array.isArray(child)) {
-      child = {
-        props: {children: child}
-      };
-    }
+  for (let i = 0; i < children.length; i++) {
+    let child = children[i];
     let newFiber = null;
     // todo 比较 type key
-    const sameType =
-      child &&
-      oldFiber &&
-      child.type === oldFiber.type &&
-      child.key === oldFiber.key;
+    const sameType = child && oldFiber && child.type === oldFiber.type;
     if (sameType) {
       // 复用 update
       newFiber = {
         type: oldFiber.type, //类型 区分不同的fiber，比如说function class host等
-        key: oldFiber.key,
         props: child.props, //属性参数等
         node: oldFiber.node, //真实dom节点
         base: oldFiber, //存储fiber，便于去比较
@@ -76,7 +84,6 @@ function reconcileChildren(workInProgressFiber, children) {
     if (!sameType && child) {
       newFiber = {
         type: child.type, //类型 区分不同的fiber，比如说function class host等
-        key: child.key,
         props: child.props, //属性参数等
         node: null, //真实dom节点
         base: null, //存储fiber，便于去比较
@@ -84,7 +91,6 @@ function reconcileChildren(workInProgressFiber, children) {
         effectTag: PLACEMENT
       };
     }
-    newFiber.index = newIdx;
     if (!sameType && oldFiber) {
       // todo  删除
       // 有个删除数组， 每次push 打了删除tag的fiber进去，最后统一提交
@@ -97,7 +103,7 @@ function reconcileChildren(workInProgressFiber, children) {
     }
     // parent
     // child
-    if (newIdx === 0) {
+    if (i === 0) {
       workInProgressFiber.child = newFiber;
     } else {
       prevSibling.sibling = newFiber;
@@ -166,7 +172,8 @@ function updateHostComponent(fiber) {
 
 // fragment标签，，构建fiber
 function updateFragmentComponent(fiber) {
-  const {children} = fiber.props;
+  console.log("updateFragmentComponent", fiber); //sy-log
+  const {children = []} = fiber.props || {};
   reconcileChildren(fiber, children);
 }
 
@@ -175,7 +182,8 @@ function performUnitOfWork(fiber) {
   // 执行当前子任务
   // todo
   const {type} = fiber;
-
+  console.log("performUnitOfWork", fiber); //sy-log
+  fiber.child = reconcileChildren;
   if (typeof type === "function") {
     type.isReactComponent
       ? updateClassComponent(fiber)

@@ -10,6 +10,7 @@ import ContextPage from "./pages/ContextPage";
 import SetStatePage from "./pages/SetStatePage";
 import RefPage from "./pages/RefPage";
 import SuspensePage from "./pages/SuspensePage";
+import DiffPage from "./pages/DiffPage";
 
 export default function App(props) {
   return (
@@ -21,9 +22,10 @@ export default function App(props) {
       {/* <UseMemoPage /> */}
       {/* <ExamplePage /> */}
       {/* <ContextPage /> */}
-      <SetStatePage />
+      {/* <SetStatePage /> */}
       {/* <RefPage /> */}
       {/* <SuspensePage /> */}
+      <DiffPage />
     </div>
   );
 }
