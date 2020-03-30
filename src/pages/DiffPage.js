@@ -51,8 +51,10 @@ export default function DiffPage(props) {
   const [count, setCount] = useState(0);
   let arr = [0, 1, 2, 3, 4];
   if (count && count % 2) {
-    // arr.splice(2, 2);
+    arr.splice(2, 2);
     // arr = [3, 2, 1, 4, 0];
+    // arr[5] = 5;
+    arr = arr.concat([5, 6, 7]);
   }
   console.log("arr", arr); //sy-log
 
@@ -60,7 +62,7 @@ export default function DiffPage(props) {
     setCount(count + 1);
   };
   return (
-    <div>
+    <div className="diff">
       {/* <h3>DiffPage</h3> */}
       <button onClick={changeCount}>{count}</button>
       {arr.map(item => {

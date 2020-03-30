@@ -1,5 +1,4 @@
 import {PLACEMENT, UPDATE, DELETIONS, Fragment} from "./CONST";
-// todo 拓展视频 useState 实现update 以及 DELETIONS
 
 // 下一个子任务
 let nextUnitOfWork = null;
@@ -39,6 +38,16 @@ function createNode(vnode) {
   return node;
 }
 
+function deleteRemainingChildren(parentFiber, delFiber) {
+  while (delFiber) {
+    delFiber.effectTag = DELETIONS;
+    deletions.push(delFiber);
+    delFiber.props.children = [];
+    delFiber.child = null;
+    delFiber = delFiber.sibling;
+  }
+}
+
 // 构建fiber结构，遍历workInProgressFiber的子节点
 function reconcileChildren(workInProgressFiber, children) {
   // 构建fiber结构
@@ -46,8 +55,72 @@ function reconcileChildren(workInProgressFiber, children) {
   // 更新  删除 新增
   let prevSibling = null;
   let oldFiber = workInProgressFiber.base && workInProgressFiber.base.child;
+  let lastPlacedIndex = 0;
   let newIdx = 0;
-  for (; newIdx < children.length; newIdx++) {
+  let nextOldFiber;
+  let len = children.length;
+  for (; oldFiber && newIdx < len; newIdx++) {
+
+    let child = children[newIdx];
+    const sameType =
+      child &&
+      oldFiber &&
+      child.type === oldFiber.type &&
+      child.key === oldFiber.key;
+    if (Array.isArray(child)) {
+      child = {
+        props: {children: child}
+      };
+    }
+    if (oldFiber.index > newIdx) {
+      nextOldFiber = oldFiber;
+      oldFiber = null;
+    } else {
+      nextOldFiber = oldFiber.sibling;
+    }
+    let newFiber;
+    if (sameType) {
+      newFiber = {
+        type: oldFiber.type, //类型 区分不同的fiber，比如说function class host等
+        key: oldFiber.key,
+        props: child.props, //属性参数等
+        node: oldFiber.node, //真实dom节点
+        base: oldFiber, //存储fiber，便于去比较
+        parent: workInProgressFiber,
+        effectTag: UPDATE
+      };
+    } else if (child) {
+      newFiber = {
+        type: child.type, //类型 区分不同的fiber，比如说function class host等
+        key: child.key,
+        props: child.props, //属性参数等
+        node: null, //真实dom节点
+        base: null, //存储fiber，便于去比较
+        parent: workInProgressFiber,
+        effectTag: PLACEMENT
+      };
+    } else {
+      break;
+    }
+
+    if (!sameType && oldFiber && !oldFiber.base) {
+      oldFiber.effectTag = DELETIONS;
+      deletions.push(oldFiber);
+    }
+    if (newIdx === 0) {
+      workInProgressFiber.child = newFiber;
+    } else {
+      prevSibling.sibling = newFiber;
+      // sibling
+    }
+    prevSibling = newFiber;
+    oldFiber = nextOldFiber;
+  }
+  if (oldFiber && newIdx === children.length) {
+    deleteRemainingChildren(workInProgressFiber, oldFiber);
+    return;
+  }
+  for (; !oldFiber && newIdx < children.length; newIdx++) {
     let child = children[newIdx];
     if (Array.isArray(child)) {
       child = {
@@ -252,7 +325,10 @@ function commitWorker(fiber) {
     commitDeletions(fiber, parentNode);
   }
   commitWorker(fiber.child);
-  commitWorker(fiber.sibling);
+
+  if (!deletions.find(item => item === fiber.sibling)) {
+    commitWorker(fiber.sibling);
+  }
 }
 
 function commitDeletions(fiber, parentNode) {
