@@ -43,9 +43,10 @@
 //   }
 // }
 
-// import React, {useState} from "react";
-import React from "../kreact/";
-import {useState} from "../kreact/ReactDOM";
+import * as React from "react";
+import {useState} from "react";
+// import React from "../kreact/";
+// import {useState} from "../kreact/ReactDOM";
 
 export default function DiffPage(props) {
   const [count, setCount] = useState(0);
