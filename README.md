@@ -33,7 +33,7 @@ import ReactSharedInternals from "../react/src/ReactSharedInternals";
 export default ReactSharedInternals;
 ```
 
-4. /Users/gaoshaoyun/Documents/library/DebugReact/src/react/packages/scheduler/index.js
+4. /src/react/packages/scheduler/index.js
 
    ```jsx
    "use strict";
