@@ -1,3 +1,5 @@
+源码文件指引地址：https://www.processon.com/view/link/5dd68342e4b001fa2e0c4697
+
 安装： npm install
 启动： npm start
 
@@ -80,6 +82,7 @@ export {
   requestPaint
 } from "./forks/SchedulerHostConfig.default.js";
 ```
+
 
 参考：
 https://github.com/nannongrousong/blog/issues/1
