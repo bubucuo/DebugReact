@@ -3,6 +3,8 @@ import {useState, useMemo} from "react";
 
 export default function UseMemoPage(props) {
   const [count, setCount] = useState(0);
+  const [value, setValue] = useState("");
+
   const expensive = useMemo(() => {
     console.log("compute");
     let sum = 0;
@@ -12,7 +14,6 @@ export default function UseMemoPage(props) {
     return sum;
     //只有count变化，这里才重新执行
   }, [count]);
-  const [value, setValue] = useState("");
   return (
     <div>
       <h3>UseMemoPage</h3>

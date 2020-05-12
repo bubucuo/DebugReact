@@ -1,4 +1,5 @@
-import React, {Component, useState} from "react";
+import * as React from "react";
+import {Component, useState} from "react";
 
 export default class ClassFunctionComponent extends Component {
   render() {
