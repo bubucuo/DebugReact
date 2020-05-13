@@ -220,6 +220,14 @@ function reconcileChildren(workInProgressFiber, newChildren) {
     }
     previousNewFiber = newFiber;
   }
+
+  if (shouldTrackSideEffects) {
+    // 删除
+    existingChildren.forEach(child => {
+      oldFiber.effectTag = DELETION;
+      deletions.push(child);
+    });
+  }
 }
 
 function reconcileChildren_(workInProgressFiber, children) {
