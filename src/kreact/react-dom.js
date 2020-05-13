@@ -228,7 +228,7 @@ function reconcileChildren(workInProgressFiber, newChildren) {
   }
 }
 
-function reconcileChildren_(workInProgressFiber, children) {
+function reconcileChildren_old(workInProgressFiber, children) {
   // 给children构建fiber架构
   let oldFiber = workInProgressFiber.base && workInProgressFiber.base.child;
   let prevSibling = null;
