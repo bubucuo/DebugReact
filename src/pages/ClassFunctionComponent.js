@@ -28,7 +28,12 @@ class ClassComponent extends Component {
     });
   }
   add = () => {
-    // ReactDOM.unstable_batchedUpdates(() => {
+    /**
+     * ReactDOM源码中如果加这个可以使用unstable_unbatchedUpdates
+     * import { unbatchedUpdates} from 'react-reconciler/src/ReactFiberReconciler';
+      unbatchedUpdates as unstable_unbatchedUpdates,
+     */
+    // ReactDOM.unstable_unbatchedUpdates(() => {
     this.change(1);
     this.change(2);
     // });
