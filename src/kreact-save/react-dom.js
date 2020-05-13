@@ -28,7 +28,6 @@ function render(vnode, container) {
     base: currentRoot
   };
   deletions = [];
-  console.log("wipRoot", wipRoot); //sy-log
   nextUnitOfWork = wipRoot;
 }
 
@@ -79,15 +78,14 @@ function updateNode(node, prevVal, nextVal) {
 }
 
 function placeChild(newFiber, lastPlacedIndex, newIdx, shouldTrackSideEffects) {
-  // 标识了再当前父节点中的位置下标
   newFiber.index = newIdx;
   if (!shouldTrackSideEffects) {
     return lastPlacedIndex;
   }
   let base = newFiber.base;
-  console.log("base", newFiber); //sy-log
-  let oldIndex = base.index;
+  const oldIndex = base.index;
   if (oldIndex < lastPlacedIndex) {
+    newFiber.effectTag = PLACEMENT;
     return lastPlacedIndex;
   } else {
     return oldIndex;
@@ -98,29 +96,30 @@ function mapRemainingChildren(returnFiber, currentFirstChild) {
   const existingChildren = new Map();
   let existingChild = currentFirstChild;
   while (existingChild) {
-    existingChildren.set(
-      existingChild.key || existingChild.index,
-      existingChild
-    );
+    if (existingChild.key) {
+      existingChildren.set(existingChild.key, existingChild);
+    } else {
+      existingChildren.set(existingChild.index, existingChild);
+    }
     existingChild = existingChild.sibling;
   }
   return existingChildren;
 }
 
 function reconcileChildren(workInProgressFiber, newChildren) {
-  let previousNewFiber = null;
   let oldFiber = workInProgressFiber.base && workInProgressFiber.base.child;
   let shouldTrackSideEffects = true;
   if (!oldFiber) {
-    // 初次渲染
     shouldTrackSideEffects = false;
   }
-  let lastPlacedIndex = 0;
+  let previousNewFiber = null;
+  let prevSibling = null;
+  let lastPlacedIndex = 0; // 记录上次插入的位置
   let newIdx = 0;
   let nextOldFiber = null;
 
-  for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
-    let newChild = newChildren[newIdx];
+  for (; oldFiber && newIdx < newChildren.length; newIdx++) {
+    let child = newChildren[newIdx];
     if (oldFiber.index > newIdx) {
       nextOldFiber = oldFiber;
       oldFiber = null;
@@ -128,27 +127,19 @@ function reconcileChildren(workInProgressFiber, newChildren) {
       nextOldFiber = oldFiber.sibling;
     }
 
-    if (newChild.type !== oldFiber.type || newChild.key !== oldFiber.key) {
+    if (child.type !== oldFiber.type || child.key !== oldFiber.key) {
       break;
     }
-
     const newFiber = {
-      type: newChild.type,
-      key: newChild.key,
-      props: newChild.props,
+      type: child.type,
+      key: child.key,
+      props: child.props,
       node: oldFiber.node,
-      base: oldFiber,
+      base: oldFiber, //存储当前节点上一次的值
       return: workInProgressFiber,
       effectTag: UPDATE
     };
-
-    lastPlacedIndex = placeChild(
-      newFiber,
-      lastPlacedIndex,
-      newIdx,
-      shouldTrackSideEffects
-    );
-
+    lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
     if (previousNewFiber === null) {
       workInProgressFiber.child = newFiber;
     } else {
@@ -159,12 +150,13 @@ function reconcileChildren(workInProgressFiber, newChildren) {
   }
 
   if (oldFiber === null) {
+    // 重新渲染
     for (; newIdx < newChildren.length; newIdx++) {
-      let newChild = newChildren[newIdx];
+      let child = newChildren[newIdx];
       const newFiber = {
-        type: newChild.type,
-        key: newChild.key,
-        props: newChild.props,
+        type: child.type,
+        key: child.key,
+        props: child.props,
         node: null,
         base: null,
         return: workInProgressFiber,
@@ -176,7 +168,6 @@ function reconcileChildren(workInProgressFiber, newChildren) {
         newIdx,
         shouldTrackSideEffects
       );
-
       if (previousNewFiber === null) {
         workInProgressFiber.child = newFiber;
       } else {
@@ -186,45 +177,41 @@ function reconcileChildren(workInProgressFiber, newChildren) {
     }
     return;
   }
+
+  // Add all children to a key map for quick lookups.
   const existingChildren = mapRemainingChildren(workInProgressFiber, oldFiber);
   for (; newIdx < newChildren.length; newIdx++) {
-    let newChild = newChildren[newIdx];
+    let child = newChildren[newIdx];
     let newFiber = {
-      type: newChild.type,
-      key: newChild.key,
-      props: newChild.props,
+      type: child.type,
+      key: child.key,
+      props: child.props,
       return: workInProgressFiber
-      // node: oldFiber.node,
-      // base: oldFiber,
-      // effectTag: UPDATE
     };
     const matchedFiber = existingChildren.get(
-      newChild.key === null ? newIdx : newChild.key
+      child.key === null ? newIdx : child.key
     );
     if (matchedFiber) {
+      // update
       newFiber = {
         ...newFiber,
         node: matchedFiber.node,
-        base: matchedFiber,
+        base: matchedFiber, //存储当前节点上一次的值
         effectTag: UPDATE
       };
+
       shouldTrackSideEffects &&
-        existingChildren.delete(newChild.key === null ? newIdx : newChild.key);
+        existingChildren.delete(child.key === null ? newIdx : child.key);
     } else {
       newFiber = {
         ...newFiber,
         node: null,
-        base: null,
+        base: null, //存储当前节点上一次的值
         effectTag: PLACEMENT
       };
     }
-    lastPlacedIndex = placeChild(
-      newFiber,
-      lastPlacedIndex,
-      newIdx
-      // shouldTrackSideEffects
-    );
 
+    lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
     if (previousNewFiber === null) {
       workInProgressFiber.child = newFiber;
     } else {
@@ -234,11 +221,9 @@ function reconcileChildren(workInProgressFiber, newChildren) {
   }
 
   if (shouldTrackSideEffects) {
+    // 删除
     existingChildren.forEach(child => {
-      deletions.push({
-        ...child,
-        effectTag: DELETION
-      });
+      deletions.push({...child, effectTag: DELETION});
     });
   }
 }
@@ -247,13 +232,14 @@ function reconcileChildren_old(workInProgressFiber, children) {
   // 给children构建fiber架构
   let oldFiber = workInProgressFiber.base && workInProgressFiber.base.child;
   let prevSibling = null;
+  let lastPlacedIndex = 0; // 记录上次插入的位置
+
   for (let i = 0; i < children.length; i++) {
     let child = children[i];
     let newFiber = null;
     const sameType = child && oldFiber && child.type === oldFiber.type;
     if (sameType) {
       // todo 类型相同 复用
-      console.log("UPDATE", child); //sy-log
       newFiber = {
         type: child.type,
         props: child.props,
@@ -265,8 +251,6 @@ function reconcileChildren_old(workInProgressFiber, children) {
     }
     if (!sameType && child) {
       // 类型不同 child存在  新增插入
-      console.log("PLACEMENT", child); //sy-log
-
       newFiber = {
         type: child.type,
         props: child.props,
@@ -295,7 +279,6 @@ function reconcileChildren_old(workInProgressFiber, children) {
     }
     prevSibling = newFiber;
   }
-
   // 基本构建完成 done
 }
 
@@ -371,28 +354,28 @@ requestIdleCallback(workLoop);
 
 // ! commit 阶段
 function commitRoot() {
-  console.log("commitRoot"); //sy-log
   deletions.forEach(commitWorker);
   commitWorker(wipRoot.child);
   currentRoot = wipRoot;
   wipRoot = null;
 }
 
+// 返回临近的下一个node;
 function getHostSibling(fiber) {
   let sibling = fiber.return.child;
+
   while (sibling) {
     if (fiber.index + 1 === sibling.index && sibling.effectTag === UPDATE) {
       return sibling.node;
     }
     sibling = sibling.sibling;
   }
-
   return null;
 }
 
 function insertOrAppend(fiber, parentNode) {
-  let before = getHostSibling(fiber);
   let node = fiber.node;
+  let before = getHostSibling(fiber);
   if (before) {
     parentNode.insertBefore(node, before);
   } else {
@@ -414,11 +397,9 @@ function commitWorker(fiber) {
   // parentNode是指分fiber的父node（当前fiber的父fiber可能没有node吗）
   const parentNode = parentNodeFiber.node;
   if (fiber.effectTag === PLACEMENT && fiber.node !== null) {
-    console.log("PLACEMENT", fiber.node); //sy-log
     // parentNode.appendChild(fiber.node);
     insertOrAppend(fiber, parentNode);
   } else if (fiber.effectTag === UPDATE && fiber.node !== null) {
-    console.log("UPDATE", fiber.node); //sy-log
     // 更新
     updateNode(fiber.node, fiber.base.props, fiber.props);
   } else if (fiber.effectTag === DELETION && fiber.node !== null) {

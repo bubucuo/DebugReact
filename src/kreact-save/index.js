@@ -5,7 +5,6 @@ function createElement(type, config, ...children) {
     delete config.__self;
     delete config.__source;
   }
-
   let props = {};
   for (let k in config) {
     if (k !== "key") {
@@ -17,15 +16,18 @@ function createElement(type, config, ...children) {
   if (type && type.defaultProps) {
     defaultProps = {...type.defaultProps};
   }
+
   return {
     type,
     key: config.key || "",
     props: {
       ...defaultProps,
       ...props,
-      children: children.map(child =>
-        typeof child === "object" ? child : createTextNode(child)
-      )
+      children: children
+        .filter(k => k !== null)
+        .map(child => {
+          return typeof child === "object" ? child : createTextNode(child);
+        })
     }
   };
 }

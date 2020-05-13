@@ -1,4 +1,6 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
+
 import {Component, useState} from "react";
 
 export default class ClassFunctionComponent extends Component {
@@ -7,7 +9,7 @@ export default class ClassFunctionComponent extends Component {
       <div>
         <h3>ClassFunctionComponent</h3>
         <ClassComponent />
-        <FunctionComponent />
+        {/* <FunctionComponent /> */}
       </div>
     );
   }
@@ -19,9 +21,22 @@ class ClassComponent extends Component {
     this.state = {count: 0};
   }
 
+  componentDidMount() {
+    document.getElementById("btn").addEventListener("click", () => {
+      this.change(100);
+      this.change(200);
+    });
+  }
   add = () => {
+    // ReactDOM.unstable_batchedUpdates(() => {
+    this.change(1);
+    this.change(2);
+    // });
+  };
+
+  change = val => {
     this.setState({
-      count: this.state.count + 1
+      count: this.state.count + val
     });
   };
 
@@ -31,6 +46,7 @@ class ClassComponent extends Component {
         <h3>ClassComponent</h3>
         <p>{this.state.count}</p>
         <button onClick={this.add}>add</button>
+        <button id="btn">原生</button>
       </div>
     );
   }
