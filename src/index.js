@@ -1,8 +1,7 @@
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import App from "./App";
+import {React, ReactDOM} from "./CONST";
+import DiffPage from "./pages/DiffPage";
 import "./index.css";
 
-ReactDOM.render(<App />, document.getElementById("root"));
+ReactDOM.render(<DiffPage />, document.getElementById("root"));
 
 console.log("version", React.version); //sy-log

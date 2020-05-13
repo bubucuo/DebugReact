@@ -1,14 +1,16 @@
-class Component {
+export default class Component {
   static isReactComponent = {};
   constructor(props) {
     this.props = props;
   }
+  // render() {
+  //   return "ooo";
+  // }
 }
 
-// function Component(props) {
+// export default function Component(props) {
 //   this.props = props;
+
 // }
 
 // Component.prototype.isReactComponent = {};
-
-export default Component;
