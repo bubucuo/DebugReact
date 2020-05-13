@@ -180,7 +180,6 @@ function reconcileChildren(workInProgressFiber, newChildren) {
 
   // Add all children to a key map for quick lookups.
   const existingChildren = mapRemainingChildren(workInProgressFiber, oldFiber);
-
   for (; newIdx < newChildren.length; newIdx++) {
     let child = newChildren[newIdx];
     let newFiber = {
@@ -224,8 +223,7 @@ function reconcileChildren(workInProgressFiber, newChildren) {
   if (shouldTrackSideEffects) {
     // 删除
     existingChildren.forEach(child => {
-      oldFiber.effectTag = DELETION;
-      deletions.push(child);
+      deletions.push({...child, effectTag: DELETION});
     });
   }
 }
