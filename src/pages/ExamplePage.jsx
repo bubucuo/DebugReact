@@ -1,45 +1,40 @@
-import React, {useState, useEffect, useLayoutEffect, useMemo} from "react";
+import {React, Component} from "../CONST";
 
-export default function ExamplePage(props) {
-  const [count, setCount] = useState(0);
-  const [count2, setCount2] = useState(-1);
+class ClassComponent extends Component {
+  render() {
+    return <div className="class border">{this.props.name}</div>;
+  }
+}
 
+function FunctionComponent({name}) {
   return (
-    <div>
-      <h1>ExamplePage</h1>
-      <p>You clicked {count} times</p>
-      <button onClick={() => setCount(count + 1)}>Click me</button>
-      <ChildHook />
+    <div className="function border">
+      {name}
+      <button onClick={() => console.log("omg")}>click</button>
     </div>
   );
 }
 
-function ChildHook(props) {
-  useEffect(() => {
-    document.title = num + "次";
-    return () => (document.title = "未知次");
-  }, []);
+const jsx = (
+  <div className="box border">
+    <p>开课吧</p>
+    <a href="https://kaikeba.com/">开课吧</a>
+    <FunctionComponent name="函数组件" />
+    <ClassComponent name="class组件" />
 
-  const [num, setNum] = useState(100);
+    {/* <>
+      <h1>文本1</h1>
+      <h2>文本2</h2>
+    </> */}
 
-  useLayoutEffect(() => {
-    console.log("test"); //sy-log
-    document.title = "0" + num + "次";
-  });
+    {/* // {[1, 2, 3].map(item => (
+    //   <div key={item}>文本{item}</div>
+    //   // <React.Fragment key={item}>
+    //   //   <h1>文本1</h1>
+    //   //   <h2>文本2</h2>
+    //   // </React.Fragment>
+    // ))} */}
+  </div>
+);
 
-  const expensive = useMemo(() => {
-    let res = 1;
-    for (let i = 1; i < num / 10; i++) {
-      res *= i;
-    }
-    return res;
-  }, [num]);
-
-  return (
-    <div>
-      omg ChildHook
-      <p>expensive:{expensive}</p>
-      <button onClick={() => setNum(num + 1)}>omg {num}</button>
-    </div>
-  );
-}
+export default jsx;

@@ -7,6 +7,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root {
+  margin: 8px;
+
+}
+
 .app {
   margin: 8px;
   /* color: red; */

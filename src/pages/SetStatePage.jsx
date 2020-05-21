@@ -1,5 +1,6 @@
-import React, {Component} from "react";
 import * as ReactDOM from "react-dom";
+import * as React from "react";
+import {Component} from "react";
 
 export default class SetStatePage extends Component {
   constructor(props) {
@@ -36,8 +37,8 @@ export default class SetStatePage extends Component {
   };
   changeCount = () => {
     this.changeValue(1);
-    this.changeValue(2);
-    this.changeValue(3);
+    // this.changeValue(2);
+    // this.changeValue(3);
 
     console.log("改变count", this.state.count); //sy-log
   };

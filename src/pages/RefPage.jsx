@@ -1,4 +1,5 @@
-import React, {Component, useRef, useCallback} from "react";
+import * as React from "react";
+import {Component, useRef} from "react";
 
 export default class RefPage extends Component {
   constructor(props) {
