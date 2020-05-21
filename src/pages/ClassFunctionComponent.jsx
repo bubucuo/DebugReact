@@ -9,7 +9,7 @@ export default class ClassFunctionComponent extends Component {
       <div>
         <h3>ClassFunctionComponent</h3>
         <ClassComponent />
-        {/* <FunctionComponent /> */}
+        <FunctionComponent />
       </div>
     );
   }
@@ -22,10 +22,10 @@ class ClassComponent extends Component {
   }
 
   componentDidMount() {
-    document.getElementById("btn").addEventListener("click", () => {
-      this.change(100);
-      this.change(200);
-    });
+    // document.getElementById("btn").addEventListener("click", () => {
+    //   this.change(100);
+    //   this.change(200);
+    // });
   }
   add = () => {
     /**
@@ -35,7 +35,7 @@ class ClassComponent extends Component {
      */
     // ReactDOM.unstable_unbatchedUpdates(() => {
     this.change(1);
-    this.change(2);
+    // this.change(2);
     // });
   };
 
@@ -46,12 +46,13 @@ class ClassComponent extends Component {
   };
 
   render() {
+    console.log("render"); //sy-log
     return (
       <div className="border">
         <h3>ClassComponent</h3>
         <p>{this.state.count}</p>
         <button onClick={this.add}>add</button>
-        <button id="btn">原生</button>
+        {/* <button id="btn">原生</button> */}
       </div>
     );
   }
@@ -59,14 +60,24 @@ class ClassComponent extends Component {
 
 function FunctionComponent(props) {
   const [count, setCount] = useState(0);
+  const [val, setVal] = useState("");
+
   const add = () => {
-    setCount(count + 1);
+    setCount(count);
   };
+
+  React.useEffect(() => {
+    console.log("useEffect"); //sy-log
+  });
+  // React.useLayoutEffect(() => {
+  //   console.log("useLayoutEffect"); //sy-log
+  // });
   return (
     <div className="border">
       <h3>FunctionComponent</h3>
       <p>{count}</p>
       <button onClick={add}>add</button>
+      <input type="text" value={val} onChange={e => setVal(e.target.value)} />
     </div>
   );
 }
