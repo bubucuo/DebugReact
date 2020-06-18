@@ -3,7 +3,7 @@
 安装： npm install
 启动： npm start
 
-如果重新 clone react，有以下三个文件需要更改：
+如果重新 clone react，有以下5个文件需要更改：
 
 1. /src/react/packages/react-reconciler/src/ReactFiberHostConfig.js
 
