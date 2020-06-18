@@ -6,27 +6,34 @@ function createElement(type, config, ...children) {
     delete config.__source;
   }
 
-  let props = {};
-  for (let k in config) {
-    if (k !== "key") {
-      props[k] = config[k];
+  // let defaultProps = {};
+  // if (type && type.defaultProps) {
+  //   defaultProps = {...type.defaultProps};
+  // }
+  // ! 源码中做了详细处理，比如过滤掉key、ref等
+  const props = {
+    // ...defaultProps,
+    ...config,
+    children: children.map(child =>
+      typeof child === "object" ? child : createTextNode(child)
+    )
+  };
+
+  delete props.key;
+
+  if (type && type.defaultProps) {
+    const defaultProps = type.defaultProps;
+    for (let propName in defaultProps) {
+      if (props[propName] === undefined) {
+        props[propName] = defaultProps[propName];
+      }
     }
   }
 
-  let defaultProps = {};
-  if (type && type.defaultProps) {
-    defaultProps = {...type.defaultProps};
-  }
   return {
-    type,
     key: config.key || "",
-    props: {
-      ...defaultProps,
-      ...props,
-      children: children.map(child =>
-        typeof child === "object" ? child : createTextNode(child)
-      )
-    }
+    type,
+    props
   };
 }
 
