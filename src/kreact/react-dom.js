@@ -346,7 +346,6 @@ function updateHostComponent(fiber) {
   // 2. 协调子元素，构建子元素的fiber架构
   const {children} = fiber.props;
   reconcileChildren(fiber, children);
-  console.log("fiebr", fiber); //sy-log
 }
 
 function performUnitOfWork(fiber) {
