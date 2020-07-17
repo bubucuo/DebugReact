@@ -154,11 +154,19 @@ function placeChild(newFiber, lastPlacedIndex, newIdx, shouldTrackSideEffects) {
   }
 
   let base = newFiber.base;
-  let oldIndex = base.index;
-  if (oldIndex < lastPlacedIndex) {
-    return lastPlacedIndex;
+  if (base !== null) {
+    let oldIndex = base.index;
+    if (oldIndex < lastPlacedIndex) {
+      // This is a move.
+      return lastPlacedIndex;
+    } else {
+      // This item can stay in place.
+      return oldIndex;
+    }
   } else {
-    return oldIndex;
+    // This is an insertion.
+    newFiber.effectTag = PLACEMENT;
+    return lastPlacedIndex;
   }
 }
 
@@ -289,7 +297,12 @@ function reconcileChildren(returnFiber, newChildren) {
         effectTag: PLACEMENT
       };
     }
-    lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
+    lastPlacedIndex = placeChild(
+      newFiber,
+      lastPlacedIndex,
+      newIdx,
+      shouldTrackSideEffects
+    );
     if (previousNewFiber === null) {
       returnFiber.child = newFiber;
     } else {
