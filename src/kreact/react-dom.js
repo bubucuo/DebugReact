@@ -240,12 +240,7 @@ function reconcileChildren(returnFiber, newChildren) {
         return: returnFiber,
         effectTag: PLACEMENT
       };
-      lastPlacedIndex = placeChild(
-        newFiber,
-        lastPlacedIndex,
-        newIdx,
-        shouldTrackSideEffects
-      );
+      lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
       if (previousNewFiber === null) {
         returnFiber.child = newFiber;
       } else {
@@ -277,8 +272,11 @@ function reconcileChildren(returnFiber, newChildren) {
     if (matchedFiber) {
       newFiber = {
         ...newFiber,
-        node: oldFiber.node,
-        base: oldFiber,
+        //! 这个地方课上的时候写成了oldFiber，但是匹配到的可以复用的是matchedFiber
+        // !而oldFiber只是老链表的头结点，并不是匹配到复用的
+        // !fixed
+        node: matchedFiber.node,
+        base: matchedFiber,
         effectTag: UPDATE
       };
       shouldTrackSideEffects &&
@@ -291,12 +289,7 @@ function reconcileChildren(returnFiber, newChildren) {
         effectTag: PLACEMENT
       };
     }
-    lastPlacedIndex = placeChild(
-      newFiber,
-      lastPlacedIndex,
-      newIdx,
-      shouldTrackSideEffects
-    );
+    lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
     if (previousNewFiber === null) {
       returnFiber.child = newFiber;
     } else {
