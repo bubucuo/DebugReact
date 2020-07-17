@@ -1,8 +1,9 @@
 import {React, ReactDOM} from "./CONST";
 import App from "./App";
 import "./index.css";
-import CloneElementPage from "./pages/CloneElementPage";
+import DiffPage from "./pages/DiffPage";
+// import ClassFunctionComponent from "./pages/ClassFunctionComponent";
 
-ReactDOM.render(<CloneElementPage />, document.getElementById("root"));
+ReactDOM.render(<DiffPage />, document.getElementById("root"));
 
 console.log("version", React.version); //sy-log

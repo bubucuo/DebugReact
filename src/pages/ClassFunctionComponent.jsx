@@ -22,10 +22,10 @@ class ClassComponent extends Component {
   }
 
   componentDidMount() {
-    // document.getElementById("btn").addEventListener("click", () => {
-    //   this.change(100);
-    //   this.change(200);
-    // });
+    document.getElementById("btn").addEventListener("click", () => {
+      this.change(100);
+      this.change(200);
+    });
   }
   add = () => {
     /**
@@ -43,16 +43,16 @@ class ClassComponent extends Component {
     this.setState({
       count: this.state.count + val
     });
+    console.log("count", this.state.count); //sy-log
   };
 
   render() {
-    console.log("render"); //sy-log
     return (
       <div className="border">
         <h3>ClassComponent</h3>
         <p>{this.state.count}</p>
         <button onClick={this.add}>add</button>
-        {/* <button id="btn">原生</button> */}
+        <button id="btn">原生</button>
       </div>
     );
   }
@@ -63,7 +63,7 @@ function FunctionComponent(props) {
   const [val, setVal] = useState("");
 
   const add = () => {
-    setCount(count);
+    setCount(count + 1);
   };
 
   React.useEffect(() => {

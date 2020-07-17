@@ -149,6 +149,7 @@ function reconcileChildren_old(workInProgressFiber, children) {
 function placeChild(newFiber, lastPlacedIndex, newIdx, shouldTrackSideEffects) {
   newFiber.index = newIdx;
   if (!shouldTrackSideEffects) {
+    // 初次渲染 不用考虑移动位置
     return lastPlacedIndex;
   }
 
@@ -162,56 +163,56 @@ function placeChild(newFiber, lastPlacedIndex, newIdx, shouldTrackSideEffects) {
 }
 
 function reconcileChildren(returnFiber, newChildren) {
-  // 记录上一次的fiber，用于构成链表结构，赋值sibling
-  let previousNewFiber: Fiber | null = null;
+  // 记录上一次的fiber 相当于上一节课的prevSilbling
+  let previousNewFiber = null;
 
   let oldFiber = returnFiber.base && returnFiber.base.child;
-
-  // 记录上次插入的位置
+  // 记录一下上次的插入位置
   let lastPlacedIndex = 0;
-  let newIdx = 0; // 下标，用于索引
-  let nextOldFiber = null; //记录oldFiber
-
-  let shouldTrackSideEffects = true; // 判断初次渲染还是更新
+  //下标 遍历children
+  let newIdx = 0;
+  // 记录下一个oldFiber
+  let nextOldFiber = null;
+  let shouldTrackSideEffects = true;
   if (!oldFiber) {
     // 初次渲染
     shouldTrackSideEffects = false;
   }
 
   for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
-    let newChild = newChildren[newIdx];
     if (oldFiber.index > newIdx) {
       nextOldFiber = oldFiber;
       oldFiber = null;
     } else {
       nextOldFiber = oldFiber.sibling;
     }
+    let newChild = newChildren[newIdx];
+
     if (!(newChild.type === oldFiber.type && newChild.key === oldFiber.key)) {
       if (oldFiber === null) {
         oldFiber = nextOldFiber;
       }
       break;
     }
+
     const newFiber = {
       key: newChild.key,
       type: newChild.type,
       props: newChild.props,
-      node: oldFiber.node, //! 课堂上这里错写成了newChild.node
+      node: oldFiber.node,
       base: oldFiber,
       return: returnFiber,
       effectTag: UPDATE
     };
+
     if (shouldTrackSideEffects) {
-      // 是更新的前提下
       if (oldFiber && newFiber.base === null) {
-        // 删除
         deletions.push({
           ...oldFiber,
           effectTag: DELETION
         });
       }
     }
-
     lastPlacedIndex = placeChild(
       newFiber,
       lastPlacedIndex,
@@ -227,18 +228,6 @@ function reconcileChildren(returnFiber, newChildren) {
     oldFiber = nextOldFiber;
   }
 
-  if (newIdx === newChildren.length) {
-    // 证明newChildren对应的fiber已经更新完毕，oldFiber么有必要再去遍历，直接删除oldFibiber上的节点就可以了
-    while (oldFiber) {
-      deletions.push({
-        ...oldFiber,
-        effectTag: DELETION
-      });
-      oldFiber = oldFiber.sibling;
-    }
-    return;
-  }
-
   if (oldFiber === null) {
     for (; newIdx < newChildren.length; newIdx++) {
       let newChild = newChildren[newIdx];
@@ -251,7 +240,6 @@ function reconcileChildren(returnFiber, newChildren) {
         return: returnFiber,
         effectTag: PLACEMENT
       };
-      // placeChild给当前fiber记录位置
       lastPlacedIndex = placeChild(
         newFiber,
         lastPlacedIndex,
@@ -268,6 +256,12 @@ function reconcileChildren(returnFiber, newChildren) {
     return;
   }
 
+  // {
+  //   '1': {}
+  // }
+  // 2->3->4
+  // [1,2,3]
+
   const existingChildren = mapRemainingChildren(returnFiber, oldFiber);
   for (; newIdx < newChildren.length; newIdx++) {
     let newChild = newChildren[newIdx];
@@ -276,20 +270,15 @@ function reconcileChildren(returnFiber, newChildren) {
       type: newChild.type,
       props: newChild.props,
       return: returnFiber
-      // node:
-      // base:
-      // effectTag:
     };
-
     const matchedFiber = existingChildren.get(
       newChild.key === null ? newIdx : newChild.key
     );
-
     if (matchedFiber) {
       newFiber = {
         ...newFiber,
-        node: matchedFiber.node,
-        base: matchedFiber,
+        node: oldFiber.node,
+        base: oldFiber,
         effectTag: UPDATE
       };
       shouldTrackSideEffects &&
@@ -302,7 +291,12 @@ function reconcileChildren(returnFiber, newChildren) {
         effectTag: PLACEMENT
       };
     }
-    lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
+    lastPlacedIndex = placeChild(
+      newFiber,
+      lastPlacedIndex,
+      newIdx,
+      shouldTrackSideEffects
+    );
     if (previousNewFiber === null) {
       returnFiber.child = newFiber;
     } else {
@@ -313,7 +307,10 @@ function reconcileChildren(returnFiber, newChildren) {
 
   if (shouldTrackSideEffects) {
     existingChildren.forEach(child =>
-      deletions.push({...child, effectTag: DELETION})
+      deletions.push({
+        ...child,
+        effectTag: DELETION
+      })
     );
   }
 }
