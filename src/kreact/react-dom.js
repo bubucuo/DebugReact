@@ -155,6 +155,7 @@ function placeChild(newFiber, lastPlacedIndex, newIdx, shouldTrackSideEffects) {
   let base = newFiber.base;
   let oldIndex = base.index;
   if (oldIndex < lastPlacedIndex) {
+    newFiber.effectTag = PLACEMENT;
     return lastPlacedIndex;
   } else {
     return oldIndex;
@@ -302,7 +303,7 @@ function reconcileChildren(returnFiber, newChildren) {
         effectTag: PLACEMENT
       };
     }
-    lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
+    lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx, shouldTrackSideEffects);
     if (previousNewFiber === null) {
       returnFiber.child = newFiber;
     } else {

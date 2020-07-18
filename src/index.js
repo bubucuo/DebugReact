@@ -1,8 +1,8 @@
 import {React, ReactDOM} from "./CONST";
 import App from "./App";
 import "./index.css";
-import CloneElementPage from "./pages/CloneElementPage";
+import DiffMovePage from "./pages/DiffMovePage";
 
-ReactDOM.render(<CloneElementPage />, document.getElementById("root"));
+ReactDOM.render(<DiffMovePage />, document.getElementById("root"));
 
 console.log("version", React.version); //sy-log
