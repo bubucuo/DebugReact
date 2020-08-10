@@ -1,9 +1,27 @@
 源码文件指引地址：https://www.processon.com/view/link/5dd68342e4b001fa2e0c4697
 
-安装： npm install
-启动： npm start
+##说明
+本项目用于调试源码，即修改配置使得项目中引用的 react 包来自 src/react，使得我们可以在 src/react 下 debug 和打 log 调试。
 
-如果重新 clone react，有以下5个文件需要更改：
+##使用步骤
+
+1. 在根目录下安装： npm install
+2. 解压 src 下的 react（v16.13.1） 压缩包，源码中有些配置需要修改，压缩包里我已经修改完，你只需要直接解压即可。
+3. 在根目录下启动： npm start
+
+
+
+##其他修改
+
+### 修改配置
+
+src下有个CONST配置文件，可以运行源码的src/react或者是运行学习使用的kreact，自己选择就行了。
+
+如果报错找不到CONST文件，看下你本地的文件名是const还是CONST，保证代码中的引入文件名和本地文件名一致。
+
+### 修改react包
+
+如果想要自己重新 clone react，有以下 5 个文件需要更改：
 
 1. /src/react/packages/react-reconciler/src/ReactFiberHostConfig.js
 
@@ -84,6 +102,9 @@ export {
 ```
 
 
-参考：
+
+
+### 参考：
+
 https://github.com/nannongrousong/blog/issues/1
 https://github.com/bubucuo/react-sourcecode-debug-env
