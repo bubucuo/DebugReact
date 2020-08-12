@@ -2,7 +2,7 @@ import * as React from "react";
 
 import PropTypes from "prop-types";
 /* 
-V17可能会废弃的三个生命周期函数用getDerivedStateFromProps替代，目前使用的话加上UNSAFE_：
+V17以后可能会废弃的三个生命周期函数用getDerivedStateFromProps替代，目前使用的话加上UNSAFE_：
 - componentWillMount
 - componentWillReceiveProps
 - componentWillUpdate
