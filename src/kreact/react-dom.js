@@ -75,13 +75,12 @@ function createNode(vnode) {
 }
 
 // 类组件
-function updateClassComponent(vnode) {
-  const {type, props} = vnode;
+function updateClassComponent(fiber) {
+  const {type, props} = fiber;
   let cmp = new type(props);
-  const vvnode = cmp.render();
-  // 生成node节点
-  const node = createNode(vvnode);
-  return node;
+  let vvnode = cmp.render();
+  const children = [vvnode];
+  reconcileChildren(fiber, children);
 }
 
 // 函数组件
@@ -426,7 +425,7 @@ function updateHostComponent(fiber) {
   // 协调子元素
   const {children} = fiber.props;
   reconcileChildren(fiber, children);
-  console.log("fiber-----", fiber); //sy-log
+  // console.log("fiber-----", fiber); //sy-log
 }
 
 function performUnitOfWork(fiber) {
