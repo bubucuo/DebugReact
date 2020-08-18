@@ -1,5 +1,5 @@
 import {React, ReactDOM, useState} from "../CONST";
-
+import './index.css'
 // import React from "../kreact/";
 // import {useState} from "../kreact/ReactDOM";
 
@@ -13,16 +13,16 @@ export default function DiffPage(props) {
       {count % 2 === 0 ? (
         <ul>
           <li key="0">0</li>
-          <li key="1">1</li>
-          <li key="2">2</li>
+          <li key="1" className='red'>1</li>
+          <li key="2" className='red'>2</li>
           <li key="3">3</li>
         </ul>
       ) : (
         <ul>
           <li key="0">0</li>
-          <li key="2">2</li>
+          <li key="2" className='green'>2</li>
           <li key="3">3</li>
-          <li key="1">1</li>
+          <li key="1" className='green'>1</li>
         </ul>
       )}
 

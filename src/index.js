@@ -1,8 +1,9 @@
-import {React, ReactDOM} from "./CONST";
-import App from "./App";
-import "./index.css";
-import DiffMovePage from "./pages/DiffMovePage";
+import {React, ReactDOM} from './CONST'
+import {useEffect, useReducer} from 'react'
+// import App from './App'
+import './index.css'
+import DiffMovePage from './pages/DiffMovePage'
+// import App from './pages/FirstRender'
+import App from './pages/SetState'
 
-ReactDOM.render(<DiffMovePage />, document.getElementById("root"));
-
-console.log("version", React.version); //sy-log
+ReactDOM.render(<App />, document.getElementById('root'))
