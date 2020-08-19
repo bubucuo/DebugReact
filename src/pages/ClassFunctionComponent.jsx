@@ -72,12 +72,23 @@ function FunctionComponent(props) {
   // React.useLayoutEffect(() => {
   //   console.log("useLayoutEffect"); //sy-log
   // });
+  const handleChange = e => {
+    // setVal(e.target.value);
+    // e.persist();
+    setVal(data => e.target.value);
+
+    //   setData(data => ({
+    //     ...data,
+    //     // This crashes in React 16 and earlier:
+    //     text: e.target.value
+    //   }));
+  };
   return (
     <div className="border">
       <h3>FunctionComponent</h3>
       <p>{count}</p>
       <button onClick={add}>add</button>
-      <input type="text" value={val} onChange={e => setVal(e.target.value)} />
+      <input type="text" value={val} onChange={handleChange} />
     </div>
   );
 }

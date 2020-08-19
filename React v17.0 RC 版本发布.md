@@ -6,9 +6,7 @@ RC：Release Candidate
 
 ## 资源
 
-[React原文地址](https://reactjs.org/blog/2020/08/10/react-v17-rc.html)
-
-[译文地址](https://mp.weixin.qq.com/s/fpcTFFnOS6JwLi7wq3OF0w)
+[升级文档地址](https://zh-hans.reactjs.org/blog/2020/08/10/react-v17-rc.html)
 
 
 
