@@ -9,8 +9,8 @@ export default class extends React.Component {
     console.log('C: react inner click.')
   }
 
-  outerClick = () => {
-    console.log('B: react outer click.')
+  outerScroll = () => {
+    console.log('B: react outer scroll.')
   }
 
   outerClickCapture = () => {
@@ -19,7 +19,7 @@ export default class extends React.Component {
 
   render() {
     return (
-      <div id='outer' onScroll={this.outerClick}>
+      <div id='outer' onScroll={this.outerScroll}>
         <button id='inner' onClick={this.innerClick}>
           BUTTON
         </button>
