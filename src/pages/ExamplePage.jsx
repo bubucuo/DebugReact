@@ -21,19 +21,6 @@ const jsx = (
     <a href="https://kaikeba.com/">开课吧</a>
     <FunctionComponent name="函数组件" />
     <ClassComponent name="class组件" />
-
-    {/* <>
-      <h1>文本1</h1>
-      <h2>文本2</h2>
-    </> */}
-
-    {/* // {[1, 2, 3].map(item => (
-    //   <div key={item}>文本{item}</div>
-    //   // <React.Fragment key={item}>
-    //   //   <h1>文本1</h1>
-    //   //   <h2>文本2</h2>
-    //   // </React.Fragment>
-    // ))} */}
   </div>
 );
 

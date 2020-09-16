@@ -15,7 +15,7 @@ function createElement(type, config, ...children) {
   };
   delete props.key;
   return {
-    key: config.key || "",
+    key: (config && config.key) || "",
     type,
     props
   };

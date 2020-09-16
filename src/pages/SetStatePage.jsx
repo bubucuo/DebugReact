@@ -36,6 +36,7 @@ export default class SetStatePage extends Component {
     }
   };
   changeCount = () => {
+    // debugger;
     this.changeValue(1);
     // this.changeValue(2);
     // this.changeValue(3);

@@ -94,6 +94,10 @@ function updateFunctionComponent(fiber) {
   reconcileChildren(fiber, children);
 }
 
+function updateFragmentComponent(fiber) {
+  const {children} = fiber.props;
+  reconcileChildren(fiber, fiber.props.children);
+}
 // 更新属性值，如className、nodeValue等
 function updateNode(node, prevVal, nextVal) {
   // 如果说prevVal, nextVal里有相同的属性值，这个时候不用管
@@ -127,77 +131,6 @@ function updateNode(node, prevVal, nextVal) {
         node[k] = nextVal[k];
       }
     });
-}
-
-// ! 源码childrne可以是单个对象或者是数组，我们这里统一处理成了数组（在createElement里）
-function reconcileChildren_old(children, node) {
-  for (let i = 0; i < children.length; i++) {
-    let child = children[i];
-    if (Array.isArray(child)) {
-      for (let j = 0; j < child.length; j++) {
-        render(child[j], node);
-      }
-    } else {
-      render(child, node);
-    }
-  }
-}
-
-// workInProgressFiber Fiber ->child->sibling
-// children 数组
-function reconcileChildren_old2(workInProgressFiber, children) {
-  // 构建fiber架构
-  let prevSlibling = null;
-  // 获取老fiber的第一子节点child（目前我们先不考虑顺序）
-  // 1 2 3 4
-  // 2 3 4
-  let oldFiber = workInProgressFiber.base && workInProgressFiber.base.child;
-  for (let i = 0; i < children.length; i++) {
-    let child = children[i];
-    let newFiber = null;
-    // 复用的前提是key和type都相同，这里我们先不考虑key
-    const sameType = child && oldFiber && child.type === oldFiber.type;
-
-    if (sameType) {
-      // 类型相同 复用
-      newFiber = {
-        type: child.type,
-        props: child.props,
-        node: oldFiber.node,
-        base: oldFiber,
-        return: workInProgressFiber,
-        effectTag: UPDATE
-      };
-    }
-    if (!sameType && child) {
-      // 创建一个新的fiber
-      newFiber = {
-        type: child.type,
-        props: child.props,
-        node: null,
-        base: null,
-        return: workInProgressFiber,
-        effectTag: PLACEMENT
-      };
-    }
-    if (!sameType && oldFiber) {
-      // todo 删除节点
-      oldFiber.effectTag = DELETION;
-      deletions.push(oldFiber);
-    }
-
-    // 链表往后走
-    if (oldFiber) {
-      oldFiber = oldFiber.sibling;
-    }
-    // 形成一个链表结构
-    if (i === 0) {
-      workInProgressFiber.child = newFiber;
-    } else {
-      prevSlibling.sibling = newFiber;
-    }
-    prevSlibling = newFiber;
-  }
 }
 
 function placeChild(newFiber, lastPlacedIndex, newIdx, shouldTrackSideEffects) {
@@ -436,9 +369,11 @@ function performUnitOfWork(fiber) {
     type.prototype.isReactComponent
       ? updateClassComponent(fiber)
       : updateFunctionComponent(fiber);
-  } else {
+  } else if (typeof type === "string") {
     // 原生标签
     updateHostComponent(fiber);
+  } else {
+    updateFragmentComponent(fiber);
   }
 
   //获取下一个子任务（fiber）
