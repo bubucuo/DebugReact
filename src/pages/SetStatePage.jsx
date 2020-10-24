@@ -2,6 +2,8 @@ import * as ReactDOM from "react-dom";
 import * as React from "react";
 import {Component} from "react";
 
+// setState在合成事件中，是异步执行（批量执行）
+// 但是在setTimeout、或者原生事件中就是同步的
 export default class SetStatePage extends Component {
   constructor(props) {
     super(props);
