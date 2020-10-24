@@ -145,16 +145,6 @@ function updateHostComponent(fiber) {
 // 2 3 4
 // ! 今天没有考虑位置移动，下节课继续这一点
 function reconcileChildren(workInProgress, children) {
-  // 记录上个fiber，相当于kreact里的prevSibling
-  let previousNewFiber: Fiber | null = null;
-
-  let oldFiber = currentFirstChild;
-  // 记录上次插入的位置（）这里的插入和我们写的kreact有点不同，这里的插入还可以是老节点的插入
-  let lastPlacedIndex = 0;
-  // 记录遍历newChildren数组的下标
-  let newIdx = 0;
-  let nextOldFiber = null;
-
   // 记录上一个的哥哥fiber
   let prevSibling = null;
   let oldFiber = workInProgress.base && workInProgress.base.child;
