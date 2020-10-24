@@ -17,7 +17,9 @@ function createElement(type, config, ...children) {
       typeof child === "object" ? child : createTextNode(child)
     )
   };
+  delete props.key;
   return {
+    key: (config && config.key) || "",
     type,
     props
   };
