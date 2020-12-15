@@ -26,23 +26,6 @@ function FunctionComponent(props) {
   );
 }
 
-// ! 常见陷阱
-// key在同一个层级下要唯一并且稳定
-// 1. key用Math.random()或者Date
-// 节点不能复用，每次更新组件都会卸载老的，创建一个新的
-// 2. index
-// index什么情况下会影响
-// 列表顺序不稳定的时候容易出bug，如发生拖动事件
-
-// function FragmentComponent(props) {
-//   return [1, 2, 3].map((item, index) => (
-//     <React.Fragment key={index}>
-//       <li>omg</li>
-//       <li>omg2</li>
-//     </React.Fragment>
-//   ));
-// }
-
 const jsx = (
   <div className="border">
     <h1>全栈</h1>
@@ -53,9 +36,6 @@ const jsx = (
       <li>omg</li>
       <li>omg2</li>
     </>
-    {/* <ul>
-      <FragmentComponent />
-    </ul> */}
   </div>
 );
 
