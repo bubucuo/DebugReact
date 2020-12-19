@@ -1,8 +1,5 @@
 import {React, ReactDOM, useState} from "../CONST";
 
-// import React from "../kreact/";
-// import {useState} from "../kreact/ReactDOM";
-
 export default function DiffPage(props) {
   const [count, setCount] = useState(0);
   return (

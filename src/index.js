@@ -1,6 +1,8 @@
-import * as React from "react";
-import {Component} from "react";
-import * as ReactDOM from "react-dom";
+// import * as React from "react";
+// import {Component} from "react";
+// import * as ReactDOM from "react-dom";
+
+import {React, ReactDOM, Component, useState} from "./CONST";
 
 // import React from "./kreact/";
 // import ReactDOM, {useState} from "./kreact/react-dom";
@@ -8,38 +10,9 @@ import * as ReactDOM from "react-dom";
 
 import "./index.css";
 
-class ClassCoomponent extends Component {
-  render() {
-    return (
-      <div className="border">
-        <p>{this.props.name}</p>
-      </div>
-    );
-  }
-}
+import App from "./App";
 
-function FunctionComponent(props) {
-  return (
-    <div className="border">
-      <p>{props.name}</p>
-    </div>
-  );
-}
-
-const jsx = (
-  <div className="border">
-    <h1>全栈</h1>
-    <a href="https://www.kaikeba.com/">kkb</a>
-    <FunctionComponent name="函数组件" />
-    <ClassCoomponent name="类组件" />
-    <>
-      <li>omg</li>
-      <li>omg2</li>
-    </>
-  </div>
-);
-
-ReactDOM.render(jsx, document.getElementById("root"));
+ReactDOM.render(<App />, document.getElementById("root"));
 
 // console.log("React", React.version); //sy-log
 

@@ -28,7 +28,7 @@ export default class SetStatePage extends Component {
           count: count + v
         },
         nextState => {
-          console.log("nex", this.state); //sy-log
+          console.log("SetStatePage next", this.state); //sy-log
         }
       );
     } else {

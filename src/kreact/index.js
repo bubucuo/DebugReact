@@ -1,4 +1,4 @@
-import {TEXT} from "./const";
+import {TEXT} from "./CONST";
 
 // 如果是原生标签节点, type是字符串，如div、span
 // 如果是文本节点， type就没有，这里我们为了方便简单自己定义成了TEXT，（源码中没有这么做）

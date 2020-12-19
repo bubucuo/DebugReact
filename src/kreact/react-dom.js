@@ -1,4 +1,4 @@
-import {TEXT, PLACEMENT, UPDATE, DELETION} from "./const";
+import {TEXT, PLACEMENT, UPDATE, DELETION} from "./CONST";
 
 // 下一个单元任务  fiber
 let nextUnitOfWork = null;
@@ -23,20 +23,14 @@ let deletions = null;
  * return： 父fiber
  * stateNode： 真实dom节点
  * props：属性值
- * base: 上次的节点 fiber
- * effectTag: 标记要执行的操作类型（删除、插入、更新）
+ * base: 上次的节点 fiber (alternate)
+ * effectTag: 标记要执行的操作类型（删除、插入、更新） (flags)
  */
 
 // ! vnode  虚拟dom对象
 // ! node  真实dom
 
 function render(vnode, container) {
-  // // vnode->node
-  // const node = createNode(vnode);
-  // // 再把node插入container
-  // container.appendChild(node);
-  // console.log("vnode", vnode, container); //sy-log
-
   // 初始值
   wipRoot = {
     stateNode: container,
