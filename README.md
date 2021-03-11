@@ -17,7 +17,11 @@ src 下有个 CONST 配置文件，可以运行源码的 src/react 或者是运�
 
 如果报错找不到 CONST 文件，看下你本地的文件名是 const 还是 CONST，保证代码中的引入文件名和本地文件名一致。
 
+**注意：另外，这个修改配置规则用的react包是2021.03.09日下载的，后面版本更新了，可能修改配置还得跟着改。**
+
 ### 修改 react 包
+
+**最新的react包可以忽略第5条修改了。**
 
 如果想要自己重新 clone react，有以下一些文件需要更改：
 
@@ -75,7 +79,7 @@ import ReactSharedInternals from "../react/src/ReactSharedInternals";
 
 5. react/packages/scheduler/src/SchedulerHostConfig.js
 
-   **这条不适用于react17.0.1**。
+   **这条不适用于react17.0.2**。
 
 ```js
 // 注释掉这里
