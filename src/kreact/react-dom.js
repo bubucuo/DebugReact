@@ -1,110 +1,44 @@
-import {TEXT, PLACEMENT, UPDATE, DELETION} from "./CONST";
+// vnode 虚拟dom
+// node 真实dom节点
 
-// 下一个单元任务  fiber
-let nextUnitOfWork = null;
-// work in progress fiber root （正在执行的根fiber）
+import {Deletion, Placement, Update} from "./const";
+
+// 根节点 fiber
 let wipRoot = null;
-
-// 当前的根节点
 let currentRoot = null;
 
-// work in progress fiber  （正在执行的fiber）
-let wipFiber = null;
-
-let deletions = null;
-
-/**
- * fiber架构
- * type: 标记类型
- * key: 标记当前层级下的唯一性
- * index: 记录当前fiber在当前层级下的下标
- * child : 第一个子元素 fiber
- * sibling ： 下一个兄弟元素 fiber
- * return： 父fiber
- * stateNode： 真实dom节点
- * props：属性值
- * base: 上次的节点 fiber (alternate)
- * effectTag: 标记要执行的操作类型（删除、插入、更新） (flags)
- */
-
-// ! vnode  虚拟dom对象
-// ! node  真实dom
-
 function render(vnode, container) {
-  // 初始值
   wipRoot = {
+    type: "div",
+    props: {children: {...vnode}},
     stateNode: container,
-    props: {
-      children: [vnode]
-    },
-    base: currentRoot
   };
   nextUnitOfWork = wipRoot;
-  deletions = [];
 }
 
-// 创建node
-function createNode(vnode) {
-  const {type, props} = vnode;
-  let node = null;
-  // 判断节点类型
-  if (type === TEXT) {
-    node = document.createTextNode("");
-  } else if (typeof type === "string") {
-    node = document.createElement(type);
-  } else if (typeof type === "function") {
-    // 判断是函数组件还是类组件
-    node = type.prototype.isReactComponent
-      ? updateClassComponent(vnode)
-      : updateFunctionComponent(vnode);
-  } else {
-    node = document.createDocumentFragment();
-  }
+function isStringOrNumber(sth) {
+  return typeof sth === "string" || typeof sth === "number";
+}
 
-  // 把props.children遍历，转成真实dom节点 ，再插入node
-  // reconcileChildren(props.children, node);
-  // 更新属性节点
-  updateNode(node, {}, props);
+// 根据vnode，生成node
+function createNode(workInProgress) {
+  let node = document.createElement(workInProgress.type);
+  updateNode(node, {}, workInProgress.props);
   return node;
 }
 
-// 类组件
-function updateClassComponent(fiber) {
-  const {type, props} = fiber;
-  let cmp = new type(props);
-  let vvnode = cmp.render();
-  const children = [vvnode];
-  reconcileChildren(fiber, children);
-}
-
-// 函数组件
-function updateFunctionComponent(fiber) {
-  wipFiber = fiber;
-  wipFiber.hooks = [];
-  wipFiber.hookIndex = 0;
-
-  const {type, props} = fiber;
-  const children = [type(props)];
-  reconcileChildren(fiber, children);
-}
-
-function updateFragmentComponent(fiber) {
-  const {children} = fiber.props;
-  reconcileChildren(fiber, fiber.props.children);
-}
-// 更新属性值，如className、nodeValue等
+// 更新原生标签的属性，如className、href、id、（style、事件）等
 function updateNode(node, prevVal, nextVal) {
-  // 如果说prevVal, nextVal里有相同的属性值，这个时候不用管
-  // 如果说prevVal里有， nextVal没有，需要遍历prevVal执行删除操作
-  // 如果说prevVal里没有， nextVal有，这个时候不用管
-
   Object.keys(prevVal)
-    .filter(k => k !== "children")
-    .forEach(k => {
-      // ! 源码中的合成事件下节课讲，源码当中用到了事件代理，这里瞎写一下
-      if (k.slice(0, 2) === "on") {
-        // 简单粗暴 这是个事件
-        let eventName = k.slice(2).toLowerCase();
+    // .filter(k => k !== "children")
+    .forEach((k) => {
+      if (k === "children") {
+        // 有可能是文本
+        if (isStringOrNumber(prevVal[k])) {
+          node.textContent = "";
+        }
+      } else if (k.slice(0, 2) === "on") {
+        const eventName = k.slice(2).toLocaleLowerCase();
         node.removeEventListener(eventName, prevVal[k]);
       } else {
         if (!(k in nextVal)) {
@@ -114,12 +48,15 @@ function updateNode(node, prevVal, nextVal) {
     });
 
   Object.keys(nextVal)
-    .filter(k => k !== "children")
-    .forEach(k => {
-      // ! 源码中的合成事件下节课讲，源码当中用到了事件代理，这里瞎写一下
-      if (k.slice(0, 2) === "on") {
-        // 简单粗暴 这是个事件
-        let eventName = k.slice(2).toLowerCase();
+    // .filter(k => k !== "children")
+    .forEach((k) => {
+      if (k === "children") {
+        // 有可能是文本
+        if (isStringOrNumber(nextVal[k])) {
+          node.textContent = nextVal[k] + "";
+        }
+      } else if (k.slice(0, 2) === "on") {
+        const eventName = k.slice(2).toLocaleLowerCase();
         node.addEventListener(eventName, nextVal[k]);
       } else {
         node[k] = nextVal[k];
@@ -127,209 +64,135 @@ function updateNode(node, prevVal, nextVal) {
     });
 }
 
-function placeChild(newFiber, lastPlacedIndex, newIdx, shouldTrackSideEffects) {
-  newFiber.index = newIdx;
+// 原生标签
+function updateHostComponent(workInProgress) {
+  // 修身
+  // 构建真实dom节点
+  if (!workInProgress.stateNode) {
+    workInProgress.stateNode = createNode(workInProgress);
+  }
+  // 齐家
+  // 协调子节点
+  reconcileChildren(workInProgress, workInProgress.props.children);
+  console.log("workInProgress", workInProgress); //sy-log
+}
 
-  if (!shouldTrackSideEffects) {
-    // 初次渲染
-    return lastPlacedIndex;
+// 文本
+function updateTextCompoent(workInProgress) {
+  if (!workInProgress.stateNode) {
+    workInProgress.stateNode = document.createTextNode(workInProgress.props);
+  }
+}
+
+function updateFunctionComponent(workInProgress) {
+  // 当前正在工作的fiber以及hook的初始化
+  currentlyRenderingFiber = workInProgress;
+  currentlyRenderingFiber.memoizedState = null;
+  workInProgressHook = null;
+
+  const {type, props} = workInProgress;
+  const children = type(props);
+  reconcileChildren(workInProgress, children);
+}
+
+function updateClassComponent(workInProgress) {
+  const {type, props} = workInProgress;
+  const instance = new type(props);
+  const children = instance.render();
+  reconcileChildren(workInProgress, children);
+}
+
+function updateFragmentComponent(workInProgress) {
+  reconcileChildren(workInProgress, workInProgress.props.children);
+}
+
+function deleteChild(returnFiber, childToDelete) {
+  const last = returnFiber.lastEffect;
+
+  if (last != null) {
+    last.nextEffect = childToDelete;
+    returnFiber.lastEffect = childToDelete;
+  } else {
+    returnFiber.firstEffect = returnFiber.lastEffect = childToDelete;
   }
 
-  // 界面更新阶段，但是这里的fiber有可能新增或者更新
-  let base = newFiber.base;
-  if (base !== null) {
-    // 复用oldfiber
-    let oldIndex = base.index;
+  childToDelete.nextEffect = null;
+  childToDelete.flags = Deletion;
+}
+
+function placeChild(
+  shouldTrackSideEffects,
+  newFiber,
+  lastPlacedIndex,
+  newIndex
+) {
+  newFiber.index = newIndex;
+  if (!shouldTrackSideEffects) {
+    return lastPlacedIndex;
+  }
+  const current = newFiber.alternate;
+  if (current) {
+    const oldIndex = current.index;
     if (oldIndex < lastPlacedIndex) {
+      // 移动
+      newFiber.flags = Placement;
       return lastPlacedIndex;
     } else {
       return oldIndex;
     }
   } else {
-    // 证明是新插入的节点
-    newFiber.effectTag = PLACEMENT;
+    newFiber.flags = Placement;
     return lastPlacedIndex;
   }
 }
 
-function reconcileChildren(returnFiber, newChildren) {
-  let previousNewFiber = null;
-
-  // oldFiber 的第一个子fiber
-  let oldFiber = returnFiber.base && returnFiber.base.child;
-  let lastPlacedIndex = 0;
-  // 做累加，遍历newChildren数组
-  let newIdx = 0;
-  // oldFiber的中转，记录下个oldFiber
-  let nextOldFiber = null;
-
-  let shouldTrackSideEffects = true;
-  if (!oldFiber) {
-    // 初次渲染
-    shouldTrackSideEffects = false;
-  }
-
-  // 1. 界面更新阶段
-  for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
-    // 判断相对位置
-    // old 1  2  3_  4
-    // new    1  2  3  4   _
-    if (oldFiber.index > newIdx) {
-      nextOldFiber = oldFiber;
-      oldFiber = null;
-    } else {
-      nextOldFiber = oldFiber.sibling;
-    }
-
-    let newChild = newChildren[newIdx];
-
-    if (!(newChild.key === oldFiber.key && newChild.type === oldFiber.type)) {
-      if (oldFiber === null) {
-        oldFiber = nextOldFiber;
-      }
-      break;
-    }
-
-    const newFiber = {
-      key: newChild.key,
-      type: newChild.type,
-      props: newChild.props,
-      stateNode: oldFiber.stateNode,
-      base: oldFiber,
-      return: returnFiber,
-      effectTag: UPDATE
-    };
-    lastPlacedIndex = placeChild(
-      newFiber,
-      lastPlacedIndex,
-      newIdx,
-      shouldTrackSideEffects
-    );
-    if (previousNewFiber === null) {
-      returnFiber.child = newFiber;
-    } else {
-      previousNewFiber.sibling = newFiber;
-    }
-    previousNewFiber = newFiber;
-    // !
-    oldFiber = nextOldFiber;
-  }
-
-  if (newIdx === newChildren.length) {
-    // We've reached the end of the new children. We can delete the rest.
-    // deleteRemainingChildren(returnFiber, oldFiber);
-    // return resultingFirstChild;
-    while (oldFiber) {
-      deletions.push({
-        ...oldFiber,
-        effectTag: DELETION
-      });
-      oldFiber = oldFiber.sibling;
-    }
-  }
-
-  //2.  新增fiber 老链表已经遍历完
+function updateSlot(returnFiber, oldFiber, newChild) {
   if (oldFiber === null) {
-    for (; newIdx < newChildren.length; newIdx++) {
-      let newChild = newChildren[newIdx];
-      const newFiber = {
-        key: newChild.key,
-        type: newChild.type,
-        props: newChild.props,
-        stateNode: null,
-        base: null,
-        return: returnFiber,
-        effectTag: PLACEMENT
-      };
-      lastPlacedIndex = placeChild(
-        newFiber,
-        lastPlacedIndex,
-        newIdx,
-        shouldTrackSideEffects
-      );
-      if (previousNewFiber === null) {
-        returnFiber.child = newFiber;
-      } else {
-        previousNewFiber.sibling = newFiber;
-      }
-      previousNewFiber = newFiber;
-    }
+    return null;
+  }
+  if (isStringOrNumber(newChild)) {
+    console.log("updateSlot omg");
     return;
   }
 
-  // 3. 新老链表都有参数值
-  // 1->2-》3-》4->5
-  // [1,2,3,4]
-  // 生成map图，方便链表查找、设置和删除
-  const existingChildren = mapRemainingChildren(returnFiber, oldFiber);
-  for (; newIdx < newChildren.length; newIdx++) {
-    let newChild = newChildren[newIdx];
-
-    let newFiber = {
-      key: newChild.key,
-      type: newChild.type,
-      props: newChild.props,
-      return: returnFiber
-      // stateNode: null,
-      // base: null,
-      // effectTag: PLACEMENT
-    };
-
-    // 判断新增还是复用
-    let matchedFiber = existingChildren.get(
-      newChild.key === null ? newIdx : newChild.key
-    );
-    if (matchedFiber) {
-      // 找到啦
-      newFiber = {
-        ...newFiber,
-        stateNode: matchedFiber.stateNode,
-        base: matchedFiber,
-        effectTag: UPDATE
-      };
-      // 找到就要删除链表上的元素，防止重复查找
-      shouldTrackSideEffects &&
-        existingChildren.delete(newFiber.key === null ? newIdx : newFiber.key);
-    } else {
-      newFiber = {
-        ...newFiber,
+  if (typeof newChild === "object" && newChild !== null) {
+    if (newChild.key === oldFiber.key) {
+      let newFiber = {
+        type: newChild.type, // 类型
+        key: newChild.key,
+        props: {...newChild.props}, // 属性
         stateNode: null,
-        base: null,
-        effectTag: PLACEMENT
+        child: null, // 第一个子节点 fiber
+        sibling: null, // 下一个兄弟节点  fiber
+        return: returnFiber, // 父节点
+        alternate: null,
+        flags: Update,
       };
+      if (newChild.type === oldFiber.type) {
+        // 复用
+        newFiber = {
+          ...newFiber,
+          stateNode: oldFiber.stateNode, //如果是原生标签，代表dom节点，如果是类组件就代表实例
+          alternate: oldFiber,
+          // flags: Update,
+        };
+      }
+      return newFiber;
     }
-    lastPlacedIndex = placeChild(
-      newFiber,
-      lastPlacedIndex,
-      newIdx,
-      shouldTrackSideEffects
-    );
-    if (previousNewFiber === null) {
-      returnFiber.child = newFiber;
-    } else {
-      previousNewFiber.sibling = newFiber;
-    }
-    previousNewFiber = newFiber;
   }
 
-  if (shouldTrackSideEffects) {
-    existingChildren.forEach(child =>
-      deletions.push({
-        ...child,
-        effectTag: DELETION
-      })
-    );
+  return null;
+}
+
+function deleteRemainingChildren(returnFiber, currentFirstChild) {
+  let childToDelete = currentFirstChild;
+  while (currentFirstChild) {
+    deleteChild(returnFiber, childToDelete);
+    childToDelete = childToDelete.sibling;
   }
 }
-// {
-//   'aa': {
-//     // 这是个fiber节点
-//   }
-// }
+
 function mapRemainingChildren(returnFiber, currentFirstChild) {
-  // Add the remaining children to a temporary map so that we can find them by
-  // keys quickly. Implicit (null) keys get added to this set with their index
-  // instead.
   const existingChildren = new Map();
 
   let existingChild = currentFirstChild;
@@ -344,168 +207,395 @@ function mapRemainingChildren(returnFiber, currentFirstChild) {
   return existingChildren;
 }
 
-function updateHostComponent(fiber) {
-  if (!fiber.stateNode) {
-    fiber.stateNode = createNode(fiber);
-  }
-  // 协调子元素
-  const {children} = fiber.props;
-  reconcileChildren(fiber, children);
-  // console.log("fiber-----", fiber); //sy-log
-}
-
-function performUnitOfWork(fiber) {
-  //执行当前任务 更新当前fiber节点
-  const {type} = fiber;
-  if (typeof type === "function") {
-    // class function
-    type.prototype.isReactComponent
-      ? updateClassComponent(fiber)
-      : updateFunctionComponent(fiber);
-  } else if (typeof type === "string") {
-    // 原生标签
-    updateHostComponent(fiber);
-  } else {
-    updateFragmentComponent(fiber);
+function updateFromMap(existingChildren, returnFiber, newIndex, newChild) {
+  if (!newChild) {
+    return null;
   }
 
-  //获取下一个子任务（fiber）
-  if (fiber.child) {
-    return fiber.child;
+  const matchedFiber =
+    existingChildren.get(newChild.key === null ? newIndex : newChild.key) ||
+    null;
+
+  if (matchedFiber === null) {
+    // 新增
+    const newFiber = {
+      type: newChild.type, // 类型
+      key: newChild.key,
+      props: {...newChild.props}, // 属性
+      stateNode: null,
+      child: null, // 第一个子节点 fiber
+      sibling: null, // 下一个兄弟节点  fiber
+      return: returnFiber, // 父节点
+      alternate: null,
+      flags: Update,
+    };
+
+    return newFiber;
   }
 
-  let nextFiber = fiber;
-  while (nextFiber) {
-    // 找到兄弟
-    if (nextFiber.sibling) {
-      return nextFiber.sibling;
-    }
-    // 没有兄弟 往祖先上找
-    nextFiber = nextFiber.return;
-  }
-}
-
-function workLoop(deadline) {
-  // 有下一个任务 并且当前帧没有结束
-  // 这里的时间是模拟，源码当中用的过期时间，源码中的过期时间和时间单位相关内
-  while (nextUnitOfWork && deadline.timeRemaining() > 1) {
-    //执行当前任务
-    //获取下一个子任务（fiber）
-    nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
-  }
-  if (!nextUnitOfWork && wipRoot) {
-    // 提交
-    commitRoot();
-  }
-  requestIdleCallback(workLoop);
-}
-
-requestIdleCallback(workLoop);
-
-// ! 提交
-
-function commitRoot() {
-  deletions.forEach(commitWorker);
-  commitWorker(wipRoot.child);
-  currentRoot = wipRoot;
-  wipRoot = null;
-}
-
-function getHostSibling(fiber) {
-  let sibling = fiber.return.child;
-  while (sibling) {
-    if (fiber.index + 1 === sibling.index && sibling.effectTag === UPDATE) {
-      return sibling.stateNode;
-    }
-    sibling = sibling.sibling;
+  if (matchedFiber.type === newChild.type) {
+    const newFiber = {
+      type: newChild.type, // 类型
+      key: newChild.key,
+      props: {...newChild.props}, // 属性
+      stateNode: matchedFiber.stateNode, //如果是原生标签，代表dom节点，如果是类组件就代表实例
+      child: null, // 第一个子节点 fiber
+      sibling: null, // 下一个兄弟节点  fiber
+      return: returnFiber, // 父节点
+      alternate: matchedFiber,
+      flags: Update,
+    };
+    return newFiber;
   }
 
   return null;
 }
 
-function insertOrAppend(fiber, parentNode) {
-  let before = getHostSibling(fiber);
-  let stateNode = fiber.stateNode;
-  if (before) {
-    parentNode.insertBefore(stateNode, before);
-  } else {
-    parentNode.appendChild(stateNode);
-  }
-}
-function commitWorker(fiber) {
-  if (!fiber) {
+function reconcileChildren(returnFiber, children) {
+  if (isStringOrNumber(children)) {
     return;
   }
 
-  // 找到parentNode,
-  // 找到最近的有node节点的祖先fiber
-  let parentNodeFiber = fiber.return;
+  let newChildren = Array.isArray(children) ? children : [children];
+
+  let previousNewFiber = null;
+  let oldFiber = (returnFiber.alternate && returnFiber.alternate.child) || null;
+  const shouldTrackSideEffects = oldFiber !== null;
+  let newIndex = 0;
+  let lastPlacedIndex = 0;
+  let nextOldFiber = null;
+  // 1 2 3 4
+  // 2 3 4
+
+  for (; oldFiber !== null && newIndex < newChildren.length; newIndex++) {
+    let child = newChildren[newIndex];
+
+    if (oldFiber.index > newIndex) {
+      console.log("omg2");
+      nextOldFiber = oldFiber;
+      oldFiber = null;
+    } else {
+      nextOldFiber = oldFiber.sibling;
+    }
+
+    const newFiber = updateSlot(returnFiber, oldFiber, child);
+
+    if (newFiber == null) {
+      if (oldFiber === null) {
+        oldFiber = nextOldFiber;
+      }
+      break;
+    }
+    if (shouldTrackSideEffects) {
+      if (oldFiber && newFiber.alternate === null) {
+        deleteChild(returnFiber, oldFiber);
+      }
+    }
+
+    lastPlacedIndex = placeChild(
+      shouldTrackSideEffects,
+      newFiber,
+      lastPlacedIndex,
+      newIndex
+    );
+    if (previousNewFiber === null) {
+      returnFiber.child = newFiber;
+    } else {
+      previousNewFiber.sibling = newFiber;
+    }
+    previousNewFiber = newFiber;
+
+    oldFiber = nextOldFiber;
+  }
+
+  if (newIndex === newChildren.length) {
+    deleteRemainingChildren(returnFiber, oldFiber);
+    return;
+  }
+
+  if (!oldFiber) {
+    for (; newIndex < newChildren.length; newIndex++) {
+      let child = newChildren[newIndex];
+      if (child === null) {
+        continue;
+      }
+
+      let newFiber = {
+        type: child.type, // 类型
+        key: child.key,
+        props: {...child.props}, // 属性
+        stateNode: null, //如果是原生标签，代表dom节点，如果是类组件就代表实例
+        child: null, // 第一个子节点 fiber
+        sibling: null, // 下一个兄弟节点  fiber
+        return: returnFiber, // 父节点
+        alternate: null,
+        flags: Placement,
+      };
+      lastPlacedIndex = placeChild(
+        shouldTrackSideEffects,
+        newFiber,
+        lastPlacedIndex,
+        newIndex
+      );
+
+      if (previousNewFiber === null) {
+        returnFiber.child = newFiber;
+      } else {
+        previousNewFiber.sibling = newFiber;
+      }
+      previousNewFiber = newFiber;
+    }
+
+    return;
+  }
+
+  const existingChildren = mapRemainingChildren(returnFiber, oldFiber);
+
+  for (; oldFiber !== null && newIndex < newChildren.length; newIndex++) {
+    let child = newChildren[newIndex];
+    const newFiber = updateFromMap(
+      existingChildren,
+      returnFiber,
+      newIndex,
+      child
+    );
+
+    if (newFiber) {
+      if (shouldTrackSideEffects) {
+        if (newFiber.alternate) {
+          existingChildren.delete(
+            newFiber.key === null ? newIndex : newFiber.key
+          );
+        }
+      }
+      lastPlacedIndex = placeChild(
+        shouldTrackSideEffects,
+        newFiber,
+        lastPlacedIndex,
+        newIndex
+      );
+      if (previousNewFiber === null) {
+        returnFiber.child = newFiber;
+      } else {
+        previousNewFiber.sibling = newFiber;
+      }
+      previousNewFiber = newFiber;
+    }
+  }
+
+  if (shouldTrackSideEffects) {
+    existingChildren.forEach((child) => deleteChild(returnFiber, child));
+  }
+}
+
+// fiber 数据结构
+// type
+// props
+// key
+// stateNode  如果是原生标签，代表dom节点，如果是类组件就代表实例
+// child 第一个子节点
+// sibling 下一个兄弟节点
+// return 指向父节点
+// alternate 上一次fiber
+
+// work in progress 当前正在执行当中的
+function performNextUnitWork(workInProgress) {
+  // step1 执行当前任务
+  const {type} = workInProgress;
+  if (isStringOrNumber(type)) {
+    // 原生标签
+    updateHostComponent(workInProgress);
+  } else if (typeof type === "function") {
+    type.prototype.isReactComponent
+      ? updateClassComponent(workInProgress)
+      : updateFunctionComponent(workInProgress);
+  } else if (typeof type === "undefined") {
+    // 文本
+    updateTextCompoent(workInProgress);
+  } else {
+    updateFragmentComponent(workInProgress);
+  }
+
+  // step2 并且要返回下一个任务 深度优先遍历
+  if (workInProgress.child) {
+    return workInProgress.child;
+  }
+
+  let nextFiber = workInProgress;
+  while (nextFiber) {
+    if (nextFiber.sibling) {
+      return nextFiber.sibling;
+    }
+    nextFiber = nextFiber.return;
+  }
+}
+
+// 下一个要执行的任务
+let nextUnitOfWork = null; // fiber
+function workLoop(IdleDeadline) {
+  while (nextUnitOfWork && IdleDeadline.timeRemaining() > 1) {
+    // 执行当前任务，并且要返回下一个任务
+    nextUnitOfWork = performNextUnitWork(nextUnitOfWork);
+  }
+
+  // 没有任务就提交
+  if (!nextUnitOfWork && wipRoot) {
+    commitRoot();
+  }
+
+  requestIdleCallback(workLoop);
+}
+
+requestIdleCallback(workLoop);
+
+function commitRoot() {
+  commitWorker(wipRoot.child);
+  currentRoot = wipRoot;
+  wipRoot = null;
+}
+
+function getParentNode(workInProgress) {
+  // 更新自己
+  let parentNodeFiber = workInProgress.return;
+
   while (!parentNodeFiber.stateNode) {
     parentNodeFiber = parentNodeFiber.return;
   }
 
-  const parentNode = parentNodeFiber.stateNode;
-  if (fiber.effectTag === PLACEMENT && fiber.stateNode !== null) {
-    // 新增插入（dom父子关系插入）
-    // parentNode.appendChild(fiber.stateNode);
-    insertOrAppend(fiber, parentNode);
-  } else if (fiber.effectTag === UPDATE && fiber.stateNode !== null) {
-    // 更新props
-    updateNode(fiber.stateNode, fiber.base.props, fiber.props);
-  } else if (fiber.effectTag === DELETION && fiber.stateNode !== null) {
-    // 删除节点
-    commitDeletions(fiber, parentNode);
-  }
+  let parentNode = parentNodeFiber.stateNode;
 
-  commitWorker(fiber.child);
-  commitWorker(fiber.sibling);
+  return parentNode;
 }
 
-// 这个parentNode是有node节点，参考上面的while循环
-function commitDeletions(fiber, parentNode) {
-  if (fiber.stateNode) {
-    parentNode.removeChild(fiber.stateNode);
-  } else {
-    // 因为有些fiber没有node节点，如Consumer
-    commitDeletions(fiber.child, parentNode);
+function handleEffect(workInProgress) {
+  if (!workInProgress.firstEffect) {
+    return;
   }
-}
 
-// 初次渲染（用init）
-//  还是更新（在init的基础上更新）
-export function useState(init) {
-  // 判断有没有老的hook
-  const oldHook = wipFiber.base && wipFiber.base.hooks[wipFiber.hookIndex];
+  let effect = workInProgress.firstEffect;
 
-  // 初次渲染（用init）
-  //  还是更新（在init的基础上更新）
-  const hook = oldHook
-    ? {
-        state: oldHook.state,
-        queue: oldHook.queue
+  while (effect) {
+    if (effect.flags & Deletion) {
+      if (effect.stateNode) {
+        getParentNode(effect).removeChild(effect.stateNode);
       }
-    : {state: init, queue: []};
+    }
 
-  // 更新hook.state
-  // 这里模拟一下批量更新
-  hook.queue.forEach(action => (hook.state = action));
+    effect = effect.nextEffect;
+  }
+}
 
-  const setState = action => {
-    // 每次执行setState，接收新的action，这里存到数组，因为等下要批量更新，执行遍历
+// 找到离的最近兄弟节点，往前插入
+function getNextDomSibling(fiber) {
+  let nextDomSibling = fiber.sibling;
+  while (nextDomSibling) {
+    if (nextDomSibling.flags & Update && nextDomSibling.stateNode) {
+      return nextDomSibling;
+    }
+    nextDomSibling = nextDomSibling.sibling;
+  }
+
+  return null;
+}
+
+function commitWorker(workInProgress) {
+  if (!workInProgress) {
+    return;
+  }
+
+  let parentNode = getParentNode(workInProgress); //parentNodeFiber.stateNode;
+  if (workInProgress.flags & Placement && workInProgress.stateNode) {
+    if (wipRoot.alternate) {
+      /**
+       * 更新
+       * 如果是更新阶段的插入，如果后面有节点是更新的，如果还用appendChild，就会导致顺序错误
+       * 如： 0 1 3 4  -> 0 1 2 4 5
+       * 这个时候节点3是删除，节点2是插入，如果依然使用appendChild插入节点末尾，
+       * 那么因为节点4的复用将会变成 0 1 4 2 5
+       * 这里我采用的办法是插入的时候，检查这个节点后有没有更新的节点，如果有那就找到，
+       * 然后往前插入。
+       */
+      let nextDomSibling = getNextDomSibling(workInProgress);
+      if (nextDomSibling) {
+        parentNode.insertBefore(
+          workInProgress.stateNode,
+          nextDomSibling.stateNode
+        );
+      } else {
+        parentNode.appendChild(workInProgress.stateNode);
+      }
+    } else {
+      // 初次渲染
+      parentNode.appendChild(workInProgress.stateNode);
+    }
+  } else if (workInProgress.flags & Update && workInProgress.stateNode) {
+    updateNode(
+      workInProgress.stateNode,
+      workInProgress.alternate.props,
+      workInProgress.props
+    );
+  }
+
+  handleEffect(workInProgress);
+
+  // 更新子节点
+  commitWorker(workInProgress.child);
+  //更新下一个兄弟节点
+  commitWorker(workInProgress.sibling);
+}
+
+// 当前正在工作的fiber
+let currentlyRenderingFiber = null;
+// 当前正在工作的hook
+let workInProgressHook = null;
+// 1-》2-》3
+
+// 一个hook
+export function useState(initalState) {
+  let hook;
+  // 判断是否是组件初次渲染
+  if (currentlyRenderingFiber.alternate) {
+    // 不是初次渲染，是更新阶段
+    currentlyRenderingFiber.memoizedState =
+      currentlyRenderingFiber.alternate.memoizedState;
+    if (workInProgressHook) {
+      hook = workInProgressHook = workInProgressHook.next;
+    } else {
+      // 是第一个hook
+      hook = workInProgressHook = currentlyRenderingFiber.memoizedState;
+    }
+  } else {
+    // 初次渲染
+    hook = {
+      memoizedState: initalState, //状态值
+      queue: [],
+      next: null,
+    };
+
+    if (workInProgressHook) {
+      // 不是第一个hook
+      workInProgressHook = workInProgressHook.next = hook;
+    } else {
+      // 是第一个hook，挂到fiber节点上
+      currentlyRenderingFiber.memoizedState = workInProgressHook = hook;
+    }
+  }
+
+  // 模拟批量处理
+  hook.queue.forEach((action) => (hook.memoizedState = action));
+
+  const dispatch = (action) => {
     hook.queue.push(action);
     wipRoot = {
+      type: currentRoot.type,
       stateNode: currentRoot.stateNode,
       props: currentRoot.props,
-      base: currentRoot
+      alternate: currentRoot,
     };
     nextUnitOfWork = wipRoot;
-    deletions = [];
   };
 
-  wipFiber.hooks.push(hook);
-  wipFiber.hookIndex++;
-
-  return [hook.state, setState];
+  return [hook.memoizedState, dispatch];
 }
 
 export default {render};

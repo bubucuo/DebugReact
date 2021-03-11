@@ -1,27 +1,20 @@
 import {React, ReactDOM, useState} from "../CONST";
 
-export default function DiffPage(props) {
-  const [count, setCount] = useState(0);
+export default function DiffPage() {
+  const [state, setState] = useState(2);
+
   return (
     <div className="border">
-      <button onClick={() => setCount(count + 1)}>{count}： count add</button>
-
-      {count % 2 ? (
-        <ul>
-          <li key="0">0</li>
-          <li key="1">1</li>
-          <li key="2">2</li>
-          <li key="3">3</li>
-          <li key="4">4</li>
-        </ul>
-      ) : (
-        <ul>
-          <li key="0">0</li>
-          <li key="2">2</li>
-          <li key="3">3</li>
-          <li key="4">4</li>
-        </ul>
-      )}
+      <button onClick={() => setState(state + 1)}>{state}</button>
+      <ul>
+        {[0, 1, 2, 3, 4, 5].map((item) => {
+          if (item < state && item !== Math.floor(state / 2)) {
+            // console.log("ahahshas", item, Math.floor(state / 2)); //sy-log
+            return <li key={item}>{item}</li>;
+          }
+          return null;
+        })}
+      </ul>
     </div>
   );
 }

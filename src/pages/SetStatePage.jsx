@@ -8,7 +8,7 @@ export default class SetStatePage extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      count: 0
+      count: 0,
     };
   }
   componentDidMount() {
@@ -25,15 +25,15 @@ export default class SetStatePage extends Component {
     if (callback) {
       this.setState(
         {
-          count: count + v
+          count: count + v,
         },
-        nextState => {
+        (nextState) => {
           console.log("SetStatePage next", this.state); //sy-log
         }
       );
     } else {
       this.setState({
-        count: count + v
+        count: count + v,
       });
     }
   };
@@ -47,14 +47,14 @@ export default class SetStatePage extends Component {
   };
 
   changeCountWithCallback = () => {
-    this.changeValue(1, nextState => {
+    this.changeValue(1, (nextState) => {
       console.log("nextState", nextState); //sy-log
     });
   };
 
   changeCountWithSetTimeout = () => {
     setTimeout(() => {
-      this.changeCount();
+      this.changeCount(); // setState
     }, 0);
   };
 
@@ -66,7 +66,7 @@ export default class SetStatePage extends Component {
         <p>count: {count}</p>
         <button onClick={this.changeCount}>change count 合成事件</button>
         <button onClick={this.changeCountWithCallback}>
-          change count 合成事件 with callback
+          change count 合成事件 asas with callback
         </button>
 
         <button onClick={this.changeCountWithSetTimeout}>
