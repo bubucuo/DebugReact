@@ -74,7 +74,7 @@ import ReactSharedInternals from "../react/src/ReactSharedInternals";
      unstable_flushAll,
      unstable_yieldValue,
      unstable_advanceTime,
-   } from "./src/SchedulerHostConfig.js";
+   } from './src/forks/SchedulerMock';
    ```
 
 5. react/packages/scheduler/src/SchedulerHostConfig.js

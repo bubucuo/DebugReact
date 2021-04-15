@@ -340,6 +340,8 @@ module.exports = function(webpackEnv) {
           __dirname,
           "../src/react/packages/react-reconciler"
         ),
+        scheduler: path.resolve(__dirname, "../src/react/packages/scheduler"),
+
         // 'react-events': path.resolve(__dirname, '../src/react/packages/events'),
         // scheduler: path.resolve(__dirname, "../src/react/packages/scheduler"),
 
