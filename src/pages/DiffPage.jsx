@@ -1,20 +1,43 @@
-import {React, ReactDOM, useState} from "../CONST";
+import { React, ReactDOM, useState } from "../whichReact";
 
+// old 1 3 2 5
+// new 0 1 2 3 4
+
+// 新增 0 4
+// 复用 1 2 3
+// 移动 3
+
+function A() {
+  return <div>a</div>;
+}
+
+function b() {
+  return "b";
+}
 export default function DiffPage() {
-  const [state, setState] = useState(2);
+  const [count, setCount] = useState(0);
 
   return (
     <div className="border">
-      <button onClick={() => setState(state + 1)}>{state}</button>
+      <button
+        onClick={() => {
+          setCount(count + 1);
+        }}
+      >
+        {count}
+      </button>
       <ul>
-        {[0, 1, 2, 3, 4, 5].map((item) => {
-          if (item < state && item !== Math.floor(state / 2)) {
-            // console.log("ahahshas", item, Math.floor(state / 2)); //sy-log
-            return <li key={item}>{item}</li>;
-          }
-          return null;
-        })}
+        {count === 2
+          ? [2, 1, 3, 4].map((item) => {
+              return <li key={item}>{item}</li>;
+            })
+          : [0, 1, 2, 3, 4].map((item) => {
+              return <li key={item}>{item}</li>;
+            })}
       </ul>
+
+      <A />
+      {b()}
     </div>
   );
 }

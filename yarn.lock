@@ -5365,6 +5365,11 @@ fragment-cache@^0.2.1:
   dependencies:
     map-cache "^0.2.2"
 
+fre@^2.0.7:
+  version "2.0.7"
+  resolved "https://registry.nlark.com/fre/download/fre-2.0.7.tgz#445c580c58c0bee1db277972c8afdc92cee359d6"
+  integrity sha1-RFxYDFjAvuHbJ3lyyK/cks7jWdY=
+
 fresh@0.5.2:
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-0.5.2.tgz#3d8cadd90d976569fa835ab1f8e4b23a105605a7"

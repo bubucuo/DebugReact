@@ -9,7 +9,6 @@ body {
 
 #root {
   margin: 8px;
-
 }
 
 .app {
@@ -39,4 +38,8 @@ body {
   height: 300px;
   text-align: center;
   line-height: 100px;
+}
+
+.box {
+  margin: 20px;
 }

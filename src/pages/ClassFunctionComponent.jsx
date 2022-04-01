@@ -39,9 +39,9 @@ class ClassComponent extends Component {
     // });
   };
 
-  change = val => {
+  change = (val) => {
     this.setState({
-      count: this.state.count + val
+      count: this.state.count + val,
     });
     console.log("count", this.state.count); //sy-log
   };
@@ -58,6 +58,10 @@ class ClassComponent extends Component {
   }
 }
 
+// 1_.2
+
+// 2
+
 function FunctionComponent(props) {
   const [count, setCount] = useState(0);
   const [val, setVal] = useState("");
@@ -72,10 +76,10 @@ function FunctionComponent(props) {
   // React.useLayoutEffect(() => {
   //   console.log("useLayoutEffect"); //sy-log
   // });
-  const handleChange = e => {
+  const handleChange = (e) => {
     // setVal(e.target.value);
     // e.persist();
-    setVal(data => e.target.value);
+    setVal((data) => e.target.value);
 
     //   setData(data => ({
     //     ...data,
