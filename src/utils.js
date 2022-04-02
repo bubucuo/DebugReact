@@ -32,16 +32,6 @@ function wrapPromise(promise) {
   };
 }
 
-// function fetchUser() {
-//   return new Promise((resolve) => {
-//     setTimeout(() => {
-//       resolve({
-//         name: "Ringo Starr " + Math.random(),
-//       });
-//     }, 2000);
-//   });
-// }
-
 function fetchUser() {
   return fetch("https://randomuser.me/api")
     .then((x) => x.json())

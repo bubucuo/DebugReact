@@ -1,7 +1,7 @@
-import { flushSync, Component } from "../whichReact";
+import { flushSync, Component, useState } from "../whichReact";
 
-// // setState在合成事件中，是异步执行（批量执行）
-// // 但是在setTimeout、或者原生事件中就是同步的
+// setState在合成事件中，是异步执行（批量执行）
+// 但是在setTimeout、或者原生事件中就是同步的
 export default class SetStatePage extends Component {
   constructor(props) {
     super(props);
@@ -28,9 +28,9 @@ export default class SetStatePage extends Component {
       });
     });
 
-    this.setState({
-      count: count + 2,
-    });
+    // this.setState({
+    //   count: count + 2,
+    // });
 
     console.log("改变count", this.state); //sy-log
   };
@@ -65,9 +65,9 @@ export default class SetStatePage extends Component {
 // export default function SetStatePage(props) {
 //   const [count, setCount] = useState(0);
 //   const handle = () => {
-//     ReactDOM.flushSync(() => {
-//       setCount(count + 1);
-//     });
+//     // ReactDOM.flushSync(() => {
+//     setCount(count + 1);
+//     // });
 //     // ReactDOM.flushSync(() => {
 //     //   setCount(count + 2);
 //     // });

@@ -1,15 +1,8 @@
-import { useRef } from "../whichReact";
-import { createStore } from "./createStore";
+import createStore from "./createStore";
 
-export function useStore() {
-  const storeRef = useRef();
+const store = createStore(countReducer);
 
-  if (!storeRef.current) {
-    storeRef.current = createStore(countReducer);
-  }
-
-  return storeRef.current;
-}
+export default store;
 
 function countReducer(action, state = 0) {
   switch (action.type) {

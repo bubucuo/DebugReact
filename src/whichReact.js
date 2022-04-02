@@ -15,6 +15,7 @@ import {
   Component,
   PureComponent,
   Suspense,
+  SuspenseList,
   startTransition,
 } from "react";
 
@@ -36,10 +37,13 @@ export {
   createRoot,
   flushSync,
   Suspense,
+  SuspenseList,
   useId,
   useSyncExternalStore,
   useInsertionEffect,
   useRef,
+  startTransition,
+  useTransition,
 };
 
 //**********************************分割线**********************************

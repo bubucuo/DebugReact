@@ -11,16 +11,17 @@ export default memo(function MySlowList({ text }) {
   for (let i = 0; i < 80; i++) {
     items.push(
       <ListItem key={i}>
-        Result #{i} for "{text}"
+              Result #{i} for "{text}"      
       </ListItem>
     );
   }
   return (
     <div className="border">
+           
       <p>
-        <b>Results for "{text}":</b>
+               <b>Results for "{text}":</b>     
       </p>
-      <ul className="List">{items}</ul>
+           <ul className="List">{items}</ul>   
     </div>
   );
 });

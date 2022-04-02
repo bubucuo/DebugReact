@@ -1,28 +1,26 @@
-export function createStore(reducer) {
+// reducer是状态修改规则
+export default function createStore(reducer) {
   let currentState;
   let listeners = [];
 
-  function getSnapshot() {
+  function getState() {
     return currentState;
   }
 
   function dispatch(action) {
     currentState = reducer(action, currentState);
-    listeners.map((listener) => listener());
+
+    listeners.forEach((listener) => listener());
   }
 
   function subscribe(listener) {
     listeners.push(listener);
-
-    return () => {
-      //   console.log("unmount", listeners);
-    };
   }
 
-  dispatch({ type: "TIANNA" });
+  dispatch({ type: "ADDDDDDDDDDDDDDDDD" });
 
   return {
-    getSnapshot,
+    getState,
     dispatch,
     subscribe,
   };

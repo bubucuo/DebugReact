@@ -1,4 +1,3 @@
-import { useStore } from "../store2";
 import {
   useId,
   useSyncExternalStore,
@@ -9,12 +8,12 @@ import {
   useReducer,
 } from "../whichReact";
 
+import store from "../store/";
+
 export default function NewHookApi({ storeProps }) {
   const id = useId();
 
-  const store = useStore(storeProps);
-
-  // const state = store.getSnapshot();
+  // const state = store.getState();
 
   // const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -24,27 +23,17 @@ export default function NewHookApi({ storeProps }) {
   //   });
   // }, []);
 
-  const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
-
-  const [count, setCount] = useState(0);
+  const state = useSyncExternalStore(store.subscribe, store.getState);
 
   useInsertionEffect(() => {
-    // debugger;
-
-    console.log("useInsertionEffect"); //sy-log
-  }, [count]);
-
+    debugger;
+  }, []);
   useLayoutEffect(() => {
-    // debugger;
-
-    console.log("useLayoutEffect"); //sy-log
-  }, [count]);
-
+    debugger;
+  }, []);
   useEffect(() => {
-    // debugger;
-
-    console.log("useEffect"); //sy-log
-  }, [count]);
+    debugger;
+  }, []);
 
   return (
     <div>
