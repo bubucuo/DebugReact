@@ -26,13 +26,13 @@ export default function NewHookApi({ storeProps }) {
   const state = useSyncExternalStore(store.subscribe, store.getState);
 
   useInsertionEffect(() => {
-    debugger;
+    // debugger;
   }, []);
   useLayoutEffect(() => {
-    debugger;
+    // debugger;
   }, []);
   useEffect(() => {
-    debugger;
+    // debugger;
   }, []);
 
   return (

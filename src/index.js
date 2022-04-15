@@ -1,12 +1,12 @@
-import { React, createRoot } from "./whichReact";
+import { React, createRoot, ReactDOM } from "./whichReact";
 import "./index.css";
 
-import NewHookApi from "./pages/NewHookApi";
+import ContextPage from "./pages/ContextPage";
 
-// ReactDOM.render(<SetStatePage />, document.getElementById("root"));
+// ReactDOM.render(jsx, document.getElementById("root"));
 
 const root = createRoot(document.getElementById("root"));
 
-root.render(<NewHookApi />);
+root.render(<ContextPage />);
 
 console.log("React", React.version); //sy-log

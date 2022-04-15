@@ -33,15 +33,13 @@ export default class ContextPage extends Component {
       <div className="border">
         <h3>ContextPage</h3>
         <MyProvider value={theme}>
-          {/* <MyConsumer>{(ctx) => <Child {...ctx} />}</MyConsumer> */}
+          <MyConsumer>{(ctx) => <Child {...ctx} />}</MyConsumer>
           <ClassChild />
-          <FunctionChild />
+          <MyProvider value={{ ...theme, color: "red" }}>
+            <FunctionChild />
+          </MyProvider>
         </MyProvider>
 
-        {/* <MyBGProvider value={bgTheme}>
-          <MyBGConsumer>{(ctx) => <Child {...ctx} />}</MyBGConsumer>
-          <FunctionChild />
-        </MyBGProvider> */}
         <button onClick={() => this.setState({ count: count + 1 })}>
           change count : {count}
         </button>
@@ -49,14 +47,6 @@ export default class ContextPage extends Component {
       </div>
     );
   }
-}
-
-function Child({ color, background }) {
-  return (
-    <div className="border" style={{ color: color, background: background }}>
-      Child-{color || background}
-    </div>
-  );
 }
 
 class ClassChild extends Component {
@@ -73,15 +63,10 @@ class ClassChild extends Component {
         >
           ClassChild-{color}
         </button>
-        <Test />
+        {/* <Test /> */}
       </div>
     );
   }
-}
-
-function Test(props) {
-  console.log("test"); //sy-log
-  return <div>Test</div>;
 }
 
 function FunctionChild(props) {
@@ -100,4 +85,17 @@ function FunctionChild(props) {
 
 function getRandomColor(props) {
   return "#" + Math.floor(Math.random() * Math.pow(10, 6));
+}
+
+function Child({ color, background }) {
+  return (
+    <div className="border" style={{ color: color, background: background }}>
+      Child-{color || background}
+    </div>
+  );
+}
+
+function Test(props) {
+  console.log("test"); //sy-log
+  return <div>Test</div>;
 }

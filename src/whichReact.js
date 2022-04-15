@@ -19,12 +19,13 @@ import {
   startTransition,
 } from "react";
 
-// import * as ReactDOM from "react-dom";
+import * as ReactDOM from "react-dom";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 
 export {
   React,
+  ReactDOM,
   useState,
   useReducer,
   useEffect,
