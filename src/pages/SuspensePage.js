@@ -1,7 +1,7 @@
 import Num from "../components/Num";
 import User from "../components/User";
-import { fetchData } from "../utils";
-import { Suspense, SuspenseList, useState } from "../whichReact";
+import {fetchData} from "../utils";
+import {Suspense, SuspenseList, useState} from "../whichReact";
 import ErrorBoundaryPage from "./ErrorBoundaryPage";
 
 const initialResource = fetchData();

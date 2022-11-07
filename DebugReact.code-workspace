@@ -4,10 +4,10 @@
       "path": "."
     },
     {
-      "path": "../../react/mini-react"
+      "path": "../mini-react"
     },
     {
-      "path": "../../react/react18-ice"
+      "path": "../../library/react"
     }
   ],
   "settings": {

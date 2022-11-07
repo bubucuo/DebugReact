@@ -10,13 +10,21 @@ export default function UseCallbackPage(props) {
     }
     return sum;
   }, [count]);
+
+  // const addClick = () => {
+  //   let sum = 0;
+  //   for (let i = 0; i < count; i++) {
+  //     sum += i;
+  //   }
+  //   return sum;
+  // };
   const [value, setValue] = useState("");
   return (
     <div>
       <h3>UseCallbackPage</h3>
       <p>{count}</p>
       <button onClick={() => setCount(count + 1)}>add</button>
-      <input value={value} onChange={event => setValue(event.target.value)} />
+      <input value={value} onChange={(event) => setValue(event.target.value)} />
       <Child addClick={addClick} />
     </div>
   );
