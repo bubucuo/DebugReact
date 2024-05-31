@@ -1,5 +1,5 @@
 import * as React from "react";
-import {useState, useMemo} from "react";
+import { useState, useMemo } from "react";
 
 export default function UseMemoPage(props) {
   const [count, setCount] = useState(0);

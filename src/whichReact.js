@@ -15,7 +15,7 @@ import {
   Component,
   PureComponent,
   Suspense,
-  SuspenseList,
+  // SuspenseList,
   startTransition,
 } from "react";
 
@@ -38,7 +38,7 @@ export {
   createRoot,
   flushSync,
   Suspense,
-  SuspenseList,
+  // SuspenseList,
   useId,
   useSyncExternalStore,
   useInsertionEffect,

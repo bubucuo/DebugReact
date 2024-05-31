@@ -2,6 +2,7 @@ import { useDeferredValue, useState, memo } from "react";
 import MySlowList from "../components/MySlowList";
 
 export default function UseDeferredValuePage(props) {
+  const [count, setCount] = useState(0);
   const [text, setText] = useState("hello");
   const deferredText = useDeferredValue(text);
 
@@ -10,10 +11,12 @@ export default function UseDeferredValuePage(props) {
   };
   return (
     <div>
+      <button onClick={() => setCount(count + 1)}>{count}</button>
       <h3>UseDeferredValuePage</h3>
       {/* 保持将当前文本传递给 input */}
       {/* 紧急更新 */}
       <input value={text} onChange={handleChange} />
+      <p>{text}</p>
       {/* 但在必要时可以将列表“延后” */}
       <p>{deferredText}</p>
 

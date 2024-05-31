@@ -335,6 +335,10 @@ module.exports = function (webpackEnv) {
 
         react: path.resolve(__dirname, "../src/react/packages/react"),
         "react-dom": path.resolve(__dirname, "../src/react/packages/react-dom"),
+        "react-dom-bindings": path.resolve(
+          __dirname,
+          "../src/react/packages/react-dom-bindings"
+        ),
         shared: path.resolve(__dirname, "../src/react/packages/shared"),
         "react-reconciler": path.resolve(
           __dirname,

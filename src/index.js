@@ -1,18 +1,12 @@
-import {React, createRoot, ReactDOM} from "./whichReact";
+import * as React from "react";
+import { createRoot } from "react-dom/client";
 import "./index.css";
-
+import ActionPage from "./pages/ActionPage";
+import UseOptimisticPage from "./pages/UseOptimisticPage";
 import jsx from "./pages/ExamplePage";
-import TransitionPage from "./pages/TransitionPage";
-import LifeCyclePage from "./pages/LifeCyclePage";
-import SuspensePage from "./pages/SuspensePage";
-import UseCallbackPage from "./pages/UseCallbackPage";
-import UseMemoPage from "./pages/UseMemoPage";
-
-// ReactDOM.render(jsx, document.getElementById("root"));
 
 const root = createRoot(document.getElementById("root"));
 
-// root.render(jsx);
-root.render(<UseMemoPage />);
+root.render(jsx);
 
 console.log("React", React.version); //sy-log

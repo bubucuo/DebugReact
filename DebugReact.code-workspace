@@ -2,19 +2,22 @@
   "folders": [
     {
       "path": "."
-    },
-    {
-      "path": "../mini-react"
-    },
-    {
-      "path": "../../library/react"
     }
   ],
   "settings": {
     "better-comments.tags": [
       {
+        "tag": "sy-",
+        "color": "yellow",
+        "strikethrough": false,
+        "underline": false,
+        "backgroundColor": "#000",
+        "bold": false,
+        "italic": false
+      },
+      {
         "tag": "!",
-        "color": "#085d08",
+        "color": "#cf40c2",
         "strikethrough": false,
         "underline": false,
         "backgroundColor": "transparent",
@@ -23,7 +26,7 @@
       },
       {
         "tag": "?",
-        "color": "pink",
+        "color": "#cf6640",
         "strikethrough": false,
         "underline": false,
         "backgroundColor": "transparent",
@@ -50,13 +53,14 @@
       },
       {
         "tag": "*",
-        "color": "#9c27b0",
+        "color": "green", //"#9c27b0",
         "strikethrough": false,
         "underline": false,
         "backgroundColor": "transparent",
         "bold": false,
         "italic": false
       }
-    ]
+    ],
+    "editor.cursorWidth": 2
   }
 }

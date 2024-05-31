@@ -5,8 +5,6 @@ const MyProvider = MyContext.Provider;
 const MyConsumer = MyContext.Consumer;
 
 const MyBGContext = createContext({});
-const MyBGProvider = MyBGContext.Provider;
-const MyBGConsumer = MyBGContext.Consumer;
 
 export default class ContextPage extends Component {
   constructor(props) {
@@ -35,7 +33,7 @@ export default class ContextPage extends Component {
         <MyProvider value={theme}>
           <MyConsumer>{(ctx) => <Child {...ctx} />}</MyConsumer>
           <ClassChild />
-          <MyProvider value={{...theme, color: "red"}}>
+          <MyProvider value={theme}>
             <FunctionChild />
           </MyProvider>
         </MyProvider>
@@ -51,6 +49,7 @@ export default class ContextPage extends Component {
 
 class ClassChild extends Component {
   static contextType = MyContext;
+
   render() {
     const {color} = this.context;
     console.log("render-omg-"); //sy-log
@@ -62,13 +61,13 @@ class ClassChild extends Component {
           onClick={() => console.log("log ClassChild")}>
           ClassChild-{color}
         </button>
-        {/* <Test /> */}
       </div>
     );
   }
 }
 
 function FunctionChild(props) {
+  console.log("%c [  ]-73", "font-size:13px; background:pink; color:#bf2c9f;");
   const context = useContext(MyContext);
   const bgContext = useContext(MyBGContext);
 
@@ -94,7 +93,3 @@ function Child({color, background}) {
   );
 }
 
-function Test(props) {
-  console.log("test"); //sy-log
-  return <div>Test</div>;
-}

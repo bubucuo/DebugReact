@@ -1,5 +1,6 @@
-import { flushSync, Component, useState } from "../whichReact";
+import {flushSync, Component, useState, useEffect} from "../whichReact";
 
+// React 18以前
 // setState在合成事件中，是异步执行（批量执行）
 // 但是在setTimeout、或者原生事件中就是同步的
 export default class SetStatePage extends Component {
@@ -20,19 +21,14 @@ export default class SetStatePage extends Component {
   }
 
   changeCount = () => {
-    const { count } = this.state;
-
+    const {count} = this.state;
     flushSync(() => {
       this.setState({
         count: count + 1,
       });
     });
 
-    // this.setState({
-    //   count: count + 2,
-    // });
-
-    console.log("改变count", this.state); //sy-log
+    console.log("改变count", this.state.count); //sy-log
   };
 
   changeCountWithSetTimeout = () => {
@@ -43,10 +39,10 @@ export default class SetStatePage extends Component {
 
   render() {
     console.log("render"); //sy-log
-    const { count } = this.state;
+    const {count} = this.state;
     return (
       <div>
-        <h3>SetStatePage</h3>
+        <h3>类组件SetStatePage</h3>
         <p>count: {count}</p>
         <button onClick={this.changeCount}>change count 合成事件</button>
 
@@ -55,29 +51,34 @@ export default class SetStatePage extends Component {
         </button>
 
         <button id="host">原生事件</button>
+
+        <FCSetStatePage />
       </div>
     );
   }
 }
 
-/* <ul ><li></li></ul> */
+function FCSetStatePage(props) {
+  const [count, setCount] = useState(0);
+  const handle = () => {
+    flushSync(() => {
+      setCount(count + 1);
+    });
+    // console.log("count", count); //sy-log
+  };
 
-// export default function SetStatePage(props) {
-//   const [count, setCount] = useState(0);
-//   const handle = () => {
-//     // ReactDOM.flushSync(() => {
-//     setCount(count + 1);
-//     // });
-//     // ReactDOM.flushSync(() => {
-//     //   setCount(count + 2);
-//     // });
-//     console.log("count", count); //sy-log
-//   };
+  useEffect(() => {
+    console.log(
+      "%c [  ]-73",
+      "font-size:13px; background:pink; color:#bf2c9f;",
+      count
+    );
+  }, [count]);
 
-//   return (
-//     <div>
-//       <h3>SetStatePage</h3>
-//       <button onClick={handle}>{count}</button>
-//     </div>
-//   );
-// }
+  return (
+    <div>
+      <h3>函数组件SetStatePage</h3>
+      <button onClick={handle}>{count}</button>
+    </div>
+  );
+}
