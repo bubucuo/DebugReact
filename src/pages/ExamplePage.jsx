@@ -4,7 +4,7 @@ import {
   useReducer,
   useEffect,
   // useLayoutEffect,
-} from "../whichReact";
+} from "react";
 
 class ClassComponent extends Component {
   state = { count: 0 };
@@ -50,12 +50,14 @@ function FunctionComponent(props) {
   );
 }
 
+const A = () => [1, 2, 3];
+
 const jsx = (
   <div className="box border">
-    <h1 className="border">omg</h1>
-    123
+    <A />
+    {/* <h1 className="border">omg</h1> */}
+    {/* 123 */}
     <FunctionComponent name="函数组件" />
-    <ClassComponent name="class组件" />
     <>
       <h1>1</h1>
       <h1>2</h1>

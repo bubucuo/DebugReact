@@ -1,76 +1,69 @@
-import { useRef, useState, useOptimistic } from "react";
+import { useOptimistic, useState, useRef } from "react";
+import { updateSomething } from "../utils";
 
-function getData(num) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (num === "error" || isNaN(num)) {
-        resolve("请输入数字");
-      } else {
-        resolve(null);
-      }
-    }, 500);
-  });
-}
-
-// export async function deliverMessage(message) {
-//   await new Promise((res) => setTimeout(res, 1000));
-//   return message;
-// }
-const initialState = { count: 0, error: "" };
-
-export default function UseOptimisticPage() {
+function Thread({ messages, sendMessage }) {
   const formRef = useRef();
-  const [state, setState] = useState({ count: 0, sending: false, error: "" });
-
-  async function sendMessage(num) {
-    const error = await getData(num);
-    if (error) {
-      setState((messages) => ({
-        error,
-        count: messages.count,
-      }));
-    } else
-      setState((messages) => ({
-        error: "",
-        count: messages.count + num,
-      }));
+  async function formAction(formData) {
+    addOptimisticMessage(formData.get("message"));
+    formRef.current.reset();
+    await sendMessage(formData);
   }
-
-  const [optimisticState, addOptimistic] = useOptimistic(
-    state,
-    (previousState, newCount) => {
-      return {
+  const [optimisticMessages, addOptimisticMessage] = useOptimistic(
+    messages,
+    (state, newMessage) => [
+      ...state,
+      {
+        text: newMessage,
         sending: true,
-        error: "",
-        count: previousState.count + newCount,
-      };
-    }
+      },
+    ]
   );
-
-  async function submitAction(formData) {
-    const num = parseInt(formData.get("incrementAmount"), 10);
-    addOptimistic(num);
-    // formRef.current.reset();
-    await sendMessage(num);
-  }
 
   console.log(
-    "%c [  ]-60",
+    "%c [  ]-24",
     "font-size:13px; background:pink; color:#bf2c9f;",
-    optimisticState
+    optimisticMessages
   );
+  return (
+    <>
+      {optimisticMessages.map((message, index) => (
+        <div key={index}>
+          {message.text}
+          {!!message.sending && <small> (Sending...)</small>}
+        </div>
+      ))}
+      <form action={formAction} ref={formRef}>
+        <input type="text" name="message" placeholder="Hello!" />
+        <button type="submit">Send</button>
+      </form>
+    </>
+  );
+}
+
+export default function UseOptimisticPage() {
+  const [errorMsg, setErrorMsg] = useState("");
+  const [messages, setMessages] = useState([
+    { text: "Hello there!", sending: false, key: 0 },
+  ]);
+  async function sendMessage(formData) {
+    const msg = formData.get("message");
+    const res = await updateSomething({ msg });
+    if (res.error) {
+      setErrorMsg(msg + "-" + res.error.msg);
+    } else {
+      setErrorMsg("");
+      setMessages((messages) => [
+        ...messages,
+        { text: res.msg, key: messages.length },
+      ]);
+    }
+  }
 
   return (
     <div>
       <h3>UseOptimisticPage</h3>
-      <form className="border" action={submitAction} ref={formRef}>
-        <span>Count: {optimisticState.count}</span>
-        <input type="text" name="incrementAmount" defaultValue="5" />
-        <p className="red">{state.error}</p>
-        <button type="submit" disabled={optimisticState.sending}>
-          optimisticState Update {optimisticState.sending && "..."}
-        </button>
-      </form>
+      <Thread messages={messages} sendMessage={sendMessage} />
+      <p className="red">{errorMsg}</p>
     </div>
   );
 }

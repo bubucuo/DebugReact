@@ -32,7 +32,7 @@ function wrapPromise(promise) {
   };
 }
 
-function fetchUser() {
+export function fetchUser() {
   return fetch("https://randomuser.me/api")
     .then((x) => x.json())
     .then((x) => x.results[0]);
@@ -44,4 +44,18 @@ function fetchNum() {
       resolve(Math.random());
     }, 3000);
   });
+}
+
+export function updateSomething(option) {
+  return fetch("https://jsonplaceholder.typicode.com/posts", {
+    method: "POST",
+    body: JSON.stringify(option),
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+    .then((response) => response.json())
+    .catch((error) => {
+      return { error: { ...error, msg: "error" || error?.msg } };
+    });
 }

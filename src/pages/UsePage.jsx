@@ -1,6 +1,5 @@
 import { useState, use, Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-// import { MessageContainer } from "./message.js";
 
 function fetchMessage() {
   return new Promise((resolve, reject) => setTimeout(reject, 1000));
