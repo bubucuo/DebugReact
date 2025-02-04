@@ -1,7 +1,9 @@
+# 本项目属于课程资源，已购买课程学员可以联系我「微信: bubucuo_sy」，获取完整版~
+# 联系方式，
+
 # React 源码学习指南
 
-关注公众号：bubucuo，回复 debug，就能拿到 DebugReact 压缩包。
-
+更多资源，关注公众号：bubucuo
 ## 前言
 
 本项目用于调试源码，即修改配置使得项目中引用的 react 包来自 src/react，使得我们可以在 src/react 下 debug 和打 log 调试。
