@@ -1,6 +1,8 @@
 import { useOptimistic, useState, useRef } from "react";
 import { updateSomething } from "../utils";
 
+// useOptimistic hook, 升级版的useReducer，可以处理乐观更新
+// hooks： 单链表 hook1(next) -> hook2 -> hook3 -> hook4
 function Thread({ messages, sendMessage }) {
   const formRef = useRef();
   async function formAction(formData) {
@@ -10,13 +12,15 @@ function Thread({ messages, sendMessage }) {
   }
   const [optimisticMessages, addOptimisticMessage] = useOptimistic(
     messages,
-    (state, newMessage) => [
-      ...state,
-      {
-        text: newMessage,
-        sending: true,
-      },
-    ]
+    (state, newMessage) => {
+      return [
+        ...state,
+        {
+          text: newMessage,
+          sending: true,
+        },
+      ];
+    }
   );
 
   console.log(
@@ -26,8 +30,16 @@ function Thread({ messages, sendMessage }) {
   );
   return (
     <>
-      {optimisticMessages.map((message, index) => (
+      {/* 正常更新（不考虑乐观） */}
+      {/* {messages.map((message, index) => (
         <div key={index}>
+          {message.text}
+          {!!message.sending && <small> (Sending...)</small>}
+        </div>
+      ))} */}
+      {/* 乐观更新 */}
+      {optimisticMessages.map((message, index) => (
+        <div key={index} className="border">
           {message.text}
           {!!message.sending && <small> (Sending...)</small>}
         </div>

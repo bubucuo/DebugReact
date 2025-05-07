@@ -1,5 +1,9 @@
 node_modules/
 react-/
-react/
+# react/
 
 .yarn/*
+
+src/react*
+
+*.zip

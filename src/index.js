@@ -18,4 +18,7 @@ const root = createRoot(document.getElementById("root"));
 // root.render(<RootRouter />);
 root.render(<UseOptimisticPage />);
 
-console.log("React", React.version); //sy-log
+console.log(
+  "%c React Version  " + React.version,
+  "font-size:24px; background:green; color:yellow;"
+);
