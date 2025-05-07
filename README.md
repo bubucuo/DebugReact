@@ -1,6 +1,8 @@
 # React 源码学习指南
 
-关注公众号：bubucuo，回复 debug，获取 DebugReact 压缩包。
+1. 本项目属于课程资源，已购买课程学员可以联系我「微信: bubucuo_sy」，获取完整版~
+
+2. 更多资源，关注公众号：bubucuo
 
 ## 前言
 
@@ -65,7 +67,7 @@ export default ReactSharedInternals;
 4. src/react/packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js
 
    ```js
-   // 在export type ViewTransitionInstance = {前面增加一下代码
+   // 在export type ViewTransitionInstance = { 前面增加以下代码
    // sy-
    type Animatable = any;
    type Keyframe = any;
