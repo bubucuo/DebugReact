@@ -1,15 +1,15 @@
 import { useState, useTransition } from "react";
+import { fetchUser } from "../utils";
+// import { startTransition } from "react";
 
 export default function ActionPage() {
   const [user, setUser] = useState("");
-  const [isPending, startTransition] = useTransition(); // 过渡更新
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = () => {
     startTransition(async () => {
-      const res = await fetch("https://randomuser.me/api")
-        .then((x) => x.json())
-        .then((x) => x.results[0]);
-      setUser(res.name.first);
+      const user = await fetchUser();
+      setUser(user.name.first);
     });
   };
 

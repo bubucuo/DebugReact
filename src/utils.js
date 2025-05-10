@@ -38,6 +38,14 @@ export function fetchUser() {
     .then((x) => x.results[0]);
 }
 
+export const fetchUser2 = async (txt) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(txt);
+    }, 1000);
+  });
+};
+
 function fetchNum() {
   return new Promise((resolve) => {
     setTimeout(() => {
