@@ -1,3 +1,10 @@
+"use server";
+
+export async function updateName(prevState, formData) {
+  const name = formData.get("name")?.toString() || "";
+  return { success: true, name };
+}
+
 // fakeAPI
 export function fetchData() {
   return {
@@ -38,7 +45,7 @@ export function fetchUser() {
     .then((x) => x.results[0]);
 }
 
-export const fetchUser2 = async (txt) => {
+export const fetchUser2 = async (txt = Math.random().toString()) => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(txt);

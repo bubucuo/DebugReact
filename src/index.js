@@ -10,9 +10,9 @@ import ActionPage from "./pages/ActionPage";
 import UseActionStatePage from "./pages/UseActionStatePage";
 import UseFormStatusPage from "./pages/UseFormStatusPage";
 
-// import UseOptimisticPage from "./pages/UseOptimisticPage";
-// import RootRouter from "./RootRouter";
+// 乐观
 import UseOptimisticPage from "./pages/UseOptimisticPage";
+import UseOptimisticPage2 from "./pages/UseOptimisticPage2";
 
 const root = createRoot(document.getElementById("root"));
 
@@ -20,7 +20,7 @@ const root = createRoot(document.getElementById("root"));
 
 // MyComponent = () => false;
 // root.render(<RootRouter />);
-root.render(<ActionPage />);
+root.render(<UseOptimisticPage2 />);
 
 console.log(
   "%c React Version  " + React.version,
