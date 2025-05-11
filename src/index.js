@@ -20,7 +20,7 @@ const root = createRoot(document.getElementById("root"));
 
 // MyComponent = () => false;
 // root.render(<RootRouter />);
-root.render(<UseOptimisticPage2 />);
+root.render(<UseOptimisticPage />);
 
 console.log(
   "%c React Version  " + React.version,

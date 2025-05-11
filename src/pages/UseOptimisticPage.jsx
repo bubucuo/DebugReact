@@ -1,13 +1,11 @@
-import { useOptimistic, useState, useRef } from "react";
+import { useOptimistic, useState } from "react";
 import { updateSomething } from "../utils";
 
 // useOptimistic hook, 升级版的useReducer，可以处理乐观更新
 // hooks： 单链表 hook1(next) -> hook2 -> hook3 -> hook4
 function Thread({ messages, sendMessage }) {
-  const formRef = useRef();
   async function formAction(formData) {
     addOptimisticMessage(formData.get("message"));
-    formRef.current.reset();
     await sendMessage(formData);
   }
   const [optimisticMessages, addOptimisticMessage] = useOptimistic(
@@ -44,8 +42,13 @@ function Thread({ messages, sendMessage }) {
           {!!message.sending && <small> (Sending...)</small>}
         </div>
       ))}
-      <form action={formAction} ref={formRef}>
-        <input type="text" name="message" placeholder="Hello!" />
+      <form action={formAction}>
+        <input
+          type="text"
+          name="message"
+          placeholder="Hello!"
+          autoComplete="off"
+        />
         <button type="submit">Send</button>
       </form>
     </>
