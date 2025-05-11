@@ -35,7 +35,6 @@
     "eslint-plugin-no-function-declare-after-return": "^1.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.21.5",
-    "eslint-plugin-react-hooks": "^4.2.0",
     "eslint-plugin-react-internal": "link:src/react/scripts/eslint-rules",
     "eslint-plugin-testing-library": "^3.9.2",
     "eslint-webpack-plugin": "^2.1.0",
@@ -168,6 +167,10 @@
     "@babel/plugin-proposal-export-default-from": "^7.12.1",
     "@babel/plugin-syntax-jsx": "^7.12.1",
     "@babel/plugin-transform-flow-strip-types": "^7.12.10",
-    "eslint-plugin-no-for-of-loops": "^1.0.1"
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint-plugin-no-for-of-loops": "^1.0.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "typescript": "^5.8.3"
   }
 }

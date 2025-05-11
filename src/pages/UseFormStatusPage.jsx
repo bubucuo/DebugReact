@@ -1,21 +1,15 @@
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { updateSomething } from "../utils";
 
 export default function UseFormStatusPage() {
-  const [user, setUser] = useState("default");
-  const [error, submitAction, isPending] = useActionState(
+  const [user, submitAction, isPending] = useActionState(
     async (previousState, formData) => {
-      const res = await fetch("https://jsonplaceholder.typicode.com/posts", {
-        method: "POST",
-        body: JSON.stringify({
-          user: formData.get("name"),
-          userId: 1,
-        }),
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      }).then((response) => response.json());
-      setUser(res.user);
+      const res = await updateSomething({
+        user: formData.get("name"),
+        userId: 1,
+      });
+      return res.user;
     },
     null
   );
@@ -24,11 +18,12 @@ export default function UseFormStatusPage() {
     <div>
       <h3>UseFormStatusPage</h3>
       <form action={submitAction}>
-        <input type="text" name="name" />
-        <DesignButton>
-          {isPending ? "DesignButton Updating.." : "DesignButton Update"}
-        </DesignButton>
-        {error && <p>{error}</p>}
+        <input type="text" name="name" autoComplete="off" />
+        <button type="submit" disabled={isPending}>
+          {isPending ? "DesignButton Updating..." : "DesignButton Update"}
+        </button>
+
+        <DesignButton />
       </form>
       <p>userName: {user}</p>
       {/* 注意下面这个 DesignButton 不能通过 useFormStatus 获取pending，因为它不在form内 */}
@@ -37,7 +32,7 @@ export default function UseFormStatusPage() {
   );
 }
 
-function DesignButton(props) {
+function DesignButton() {
   const status = useFormStatus();
   console.log(
     "%c [ pending ]-41",
@@ -47,22 +42,14 @@ function DesignButton(props) {
   );
   return (
     <>
-      <button type="submit" disabled={status.pending} {...props} />
       <p>分割线</p>
       <button
         disabled={status.pending}
-        {...props}
         onClick={() => {
-          // omg
-          console.log(
-            "%c [  ]-49",
-            "font-size:13px; background:pink; color:#bf2c9f;",
-            status
-          );
           typeof status.action === "function" && status.action();
         }}
       >
-        test
+        test{status.pending ? "ing..." : ""}
       </button>
     </>
   );

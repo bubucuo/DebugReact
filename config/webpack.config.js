@@ -358,6 +358,11 @@ module.exports = function (webpackEnv) {
           "../src/react/packages/react-devtools-timeline"
         ),
 
+        "eslint-plugin-react-hooks": path.resolve(
+          __dirname,
+          "../src/react/packages/eslint-plugin-react-hooks"
+        ),
+
         // 'react-events': path.resolve(__dirname, '../src/react/packages/events'),
         // scheduler: path.resolve(__dirname, "../src/react/packages/scheduler"),
 

@@ -14,13 +14,16 @@ import UseFormStatusPage from "./pages/UseFormStatusPage";
 import UseOptimisticPage from "./pages/UseOptimisticPage";
 import UseOptimisticPage2 from "./pages/UseOptimisticPage2";
 
+// use
+import UsePage from "./pages/UsePage";
+
 const root = createRoot(document.getElementById("root"));
 
 // let MyComponent = () => Promise.resolve();
 
 // MyComponent = () => false;
 // root.render(<RootRouter />);
-root.render(<UseOptimisticPage />);
+root.render(<UsePage />);
 
 console.log(
   "%c React Version  " + React.version,
