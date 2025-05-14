@@ -19,6 +19,8 @@ import UsePage from "./pages/UsePage";
 
 // improvements of 19
 import RefPage19 from "./pages/RefPage19";
+// other
+import UseDeferredValuePage from "./pages/UseDeferredValuePage";
 
 const root = createRoot(document.getElementById("root"));
 
@@ -26,7 +28,7 @@ const root = createRoot(document.getElementById("root"));
 
 // MyComponent = () => false;
 // root.render(<RootRouter />);
-root.render(<RefPage19 />);
+root.render(<UseDeferredValuePage />);
 
 console.log(
   "%c React Version  " + React.version,

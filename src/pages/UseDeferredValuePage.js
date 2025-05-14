@@ -4,7 +4,7 @@ import MySlowList from "../components/MySlowList";
 export default function UseDeferredValuePage(props) {
   const [count, setCount] = useState(0);
   const [text, setText] = useState("hello");
-  const deferredText = useDeferredValue(text);
+  const deferredText = useDeferredValue(text, "loading..."); // 第二个initialValue为可选，如果不设置，初次渲染就不会延迟
 
   const handleChange = (e) => {
     setText(e.target.value);
@@ -18,7 +18,7 @@ export default function UseDeferredValuePage(props) {
       <input value={text} onChange={handleChange} />
       <p>{text}</p>
       {/* 但在必要时可以将列表“延后” */}
-      <p>{deferredText}</p>
+      <p>deferredText: {deferredText}</p>
 
       {/* 非紧急更新 */}
       <MySlowList text={deferredText} />

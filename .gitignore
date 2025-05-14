@@ -4,6 +4,6 @@ react-/
 
 .yarn/*
 
-src/react*
+src/-react*
 
 *.zip
