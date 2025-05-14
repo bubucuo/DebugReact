@@ -17,13 +17,16 @@ import UseOptimisticPage2 from "./pages/UseOptimisticPage2";
 // use
 import UsePage from "./pages/UsePage";
 
+// improvements of 19
+import RefPage19 from "./pages/RefPage19";
+
 const root = createRoot(document.getElementById("root"));
 
 // let MyComponent = () => Promise.resolve();
 
 // MyComponent = () => false;
 // root.render(<RootRouter />);
-root.render(<UsePage />);
+root.render(<RefPage19 />);
 
 console.log(
   "%c React Version  " + React.version,
