@@ -2,15 +2,11 @@
 
 1. 本项目属于课程资源，已购买课程学员可以联系我「微信: bubucuo_sy」，获取完整版~
 
-2. 更多资源，关注公众号：bubucuo
+2. 更多资源，关注公众号|b站|YouTube：bubucuo
 
 ## 前言
 
 本项目用于调试源码，即修改配置使得项目中引用的 react 包来自 src/react，使得我们可以在 src/react 下 debug 和打 log 调试。
-
-## 资源
-
-1. [源码文件指引地址]([React 源码文件指引 | ProcessOn 免费在线作图,在线流程图,在线思维导图](https://www.processon.com/view/link/60b206c2e0b34d3841931a88))
 
 ## 使用步骤
 
