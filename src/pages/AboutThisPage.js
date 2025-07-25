@@ -18,7 +18,7 @@ export default class AboutThisPage extends Component {
 
   render() {
     return (
-      <div>
+      <div className="border">
         <h3>AboutThisPage</h3>
         <p>{this.state.count}</p>
         <button onClick={this.handleOfArrow}>箭头函数</button>
@@ -27,29 +27,3 @@ export default class AboutThisPage extends Component {
     );
   }
 }
-
-console.log(1);
-
-setTimeout(function () {
-  console.log(2);
-});
-
-Promise.resolve().then(function () {
-  console.log(3);
-});
-
-Promise.resolve().then(function () {
-  setTimeout(function () {
-    console.log(4);
-  });
-});
-
-Promise.resolve().then(function () {
-  console.log(5);
-});
-
-setTimeout(function () {
-  console.log(6);
-});
-
-console.log(7);

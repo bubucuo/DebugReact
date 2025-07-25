@@ -104,12 +104,12 @@ function getClientEnvironment(publicUrl) {
 
     __UMD__: true,
 
-    __EXPERIMENTAL__: true,
+    __EXPERIMENTAL__: false,
 
     __VARIANT__: false,
   };
 
-  return {raw, stringified};
+  return { raw, stringified };
 }
 
 module.exports = getClientEnvironment;

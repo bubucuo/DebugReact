@@ -28,7 +28,7 @@ const root = createRoot(document.getElementById("root"));
 
 // MyComponent = () => false;
 // root.render(<RootRouter />);
-root.render(<UseDeferredValuePage />);
+root.render(jsx);
 
 console.log(
   "%c React Version  " + React.version,

@@ -67,7 +67,8 @@ const hasJsxRuntime = (() => {
   }
 
   try {
-    require.resolve("react/jsx-runtime");
+    // require.resolve("react/jsx-runtime");
+    require.resolve("../src/react/packages/react/jsx-runtime.js");
     return true;
   } catch (e) {
     return false;
@@ -333,6 +334,14 @@ module.exports = function (webpackEnv) {
         }),
         ...(modules.webpackAliases || {}),
 
+        "react/jsx-runtime": path.resolve(
+          __dirname,
+          "../src/react/packages/react/jsx-runtime"
+        ),
+        "react/jsx-dev-runtime": path.resolve(
+          __dirname,
+          "../src/react/packages/react/jsx-dev-runtime"
+        ),
         react: path.resolve(__dirname, "../src/react/packages/react"),
         "react-dom": path.resolve(__dirname, "../src/react/packages/react-dom"),
         "react-dom-bindings": path.resolve(
@@ -448,17 +457,17 @@ module.exports = function (webpackEnv) {
                 customize: require.resolve(
                   "babel-preset-react-app/webpack-overrides"
                 ),
-                presets: [
+                plugins: [
                   [
-                    // babel-tranform-react-jsx
-                    require.resolve("babel-preset-react-app"),
+                    require.resolve("@babel/plugin-transform-react-jsx"),
                     {
                       runtime: hasJsxRuntime ? "automatic" : "classic",
+                      importSource: path.resolve(
+                        __dirname,
+                        "../src/react/packages/react/"
+                      ), // 注意如果使用 classic，要把这一项注释掉
                     },
                   ],
-                ],
-
-                plugins: [
                   [
                     require.resolve("babel-plugin-named-asset-import"),
                     {
